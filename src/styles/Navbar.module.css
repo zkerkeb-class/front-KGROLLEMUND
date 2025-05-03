@@ -1,0 +1,122 @@
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-md) var(--space-xl);
+  background-color: var(--bg-primary);
+  box-shadow: var(--shadow-md);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.userIcon {
+  background-color: var(--primary-light);
+  color: var(--bg-primary);
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-md);
+}
+
+.userName {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.userEmail {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  margin-left: var(--space-sm);
+}
+
+.badge {
+  background-color: var(--secondary-color);
+  color: white;
+  font-size: var(--font-size-xs);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-full);
+  margin-left: var(--space-sm);
+}
+
+.navLinks {
+  display: flex;
+  gap: var(--space-xl);
+}
+
+.navLinks a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm);
+  border-radius: var(--radius-md);
+}
+
+.navIcon {
+  color: var(--primary-color);
+  font-size: var(--font-size-lg);
+}
+
+.navLinks a:hover {
+  color: var(--primary-color);
+  background-color: var(--gray-100);
+  text-decoration: none;
+}
+
+.logoutBtn {
+  background-color: var(--gray-100);
+  border: none;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.logoutIcon {
+  color: var(--error-color);
+  font-size: var(--font-size-md);
+}
+
+.logoutBtn:hover {
+  background-color: var(--error-color);
+  color: white;
+}
+
+.logoutBtn:hover .logoutIcon {
+  color: white;
+}
+
+@media (max-width: 768px) {
+  .navbar {
+    flex-direction: column;
+    padding: var(--space-md);
+    gap: var(--space-md);
+  }
+  
+  .userInfo, .navLinks {
+    margin-bottom: var(--space-md);
+  }
+  
+  .navLinks {
+    width: 100%;
+    justify-content: center;
+  }
+}

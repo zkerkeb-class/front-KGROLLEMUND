@@ -1,0 +1,205 @@
+/* Styles existants */
+
+.oauthButtons {
+  margin-top: var(--space-xl);
+  text-align: center;
+}
+
+.oauthButtons p {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-md);
+  position: relative;
+}
+
+.oauthButtons p::before,
+.oauthButtons p::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 30%;
+  height: 1px;
+  background-color: var(--gray-300);
+}
+
+.oauthButtons p::before {
+  left: 0;
+}
+
+.oauthButtons p::after {
+  right: 0;
+}
+
+.oauthContainer {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-md);
+  margin-top: var(--space-lg);
+}
+
+.oauthBtn {
+  padding: var(--space-md);
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  max-width: 120px;
+  box-shadow: var(--shadow-sm);
+}
+
+.icon {
+  margin-right: var(--space-xs);
+  font-size: var(--font-size-lg);
+}
+
+.googleBtn {
+  background-color: white;
+  color: var(--gray-800);
+  border: 1px solid var(--gray-300);
+}
+
+.googleBtn:hover {
+  background-color: var(--gray-100);
+  box-shadow: var(--shadow-md);
+}
+
+.linkedinBtn {
+  background-color: #0077B5;
+  color: white;
+}
+
+.linkedinBtn:hover {
+  background-color: #005e93;
+  box-shadow: var(--shadow-md);
+}
+
+.githubBtn {
+  background-color: var(--github-color);
+  color: white;
+}
+
+.githubBtn:hover {
+  background-color: #000000;
+  box-shadow: var(--shadow-md);
+}
+
+.authForm {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  max-width: 400px;
+  width: 100%;
+}
+
+.authForm h2 {
+  text-align: center;
+  margin-bottom: var(--space-xl);
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: var(--font-size-2xl);
+}
+
+.formGroup {
+  margin-bottom: var(--space-lg);
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: var(--space-xs);
+  font-weight: 500;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.formGroup input {
+  width: 100%;
+  padding: var(--space-md);
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-md);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  background-color: var(--bg-primary);
+}
+
+.formGroup input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.submitBtn {
+  width: 100%;
+  padding: var(--space-md);
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-md);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), transform var(--transition-fast);
+  margin-top: var(--space-lg);
+}
+
+.submitBtn:hover {
+  background-color: var(--primary-dark);
+  transform: translateY(-1px);
+}
+
+.submitBtn:active {
+  transform: translateY(0);
+}
+
+.submitBtn:disabled {
+  background-color: var(--gray-400);
+  cursor: not-allowed;
+  transform: none;
+}
+
+.switchMode {
+  margin-top: var(--space-xl);
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.switchBtn {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  font-weight: 500;
+  cursor: pointer;
+  margin-left: var(--space-xs);
+  transition: color var(--transition-fast);
+  font-size: var(--font-size-sm);
+}
+
+.switchBtn:hover {
+  color: var(--primary-dark);
+  text-decoration: underline;
+}
+
+.error {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--error-color);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-lg);
+  text-align: center;
+  font-size: var(--font-size-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.error svg {
+  margin-right: var(--space-xs);
+} 

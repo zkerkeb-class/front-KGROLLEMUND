@@ -96,71 +96,163 @@
   padding: 2rem;
   max-width: 400px;
   width: 100%;
+  margin: 0 auto;
+  padding: 20px;
 }
 
 .authForm h2 {
   text-align: center;
-  margin-bottom: var(--space-xl);
-  color: var(--text-primary);
-  font-weight: 600;
-  font-size: var(--font-size-2xl);
+  margin-bottom: 20px;
+  font-size: 1.8rem;
+  color: #2c3e50;
 }
 
 .formGroup {
-  margin-bottom: var(--space-lg);
+  margin-bottom: 1rem;
 }
 
 .formGroup label {
   display: block;
-  margin-bottom: var(--space-xs);
+  margin-bottom: 5px;
   font-weight: 500;
-  color: var(--text-secondary);
-  font-size: var(--font-size-sm);
+  color: #2c3e50;
 }
 
 .formGroup input {
   width: 100%;
-  padding: var(--space-md);
-  border: 1px solid var(--gray-300);
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-md);
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-  background-color: var(--bg-primary);
+  padding: 10px 15px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  transition: border-color 0.3s;
 }
 
 .formGroup input:focus {
+  border-color: #3498db;
   outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.passwordInput {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.togglePassword {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #7f8c8d;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0;
+}
+
+.togglePassword:hover {
+  color: #2c3e50;
+}
+
+.forgotPassword {
+  text-align: right;
+  margin-bottom: 15px;
+}
+
+.forgotBtn {
+  background: none;
+  border: none;
+  color: #3498db;
+  cursor: pointer;
+  font-size: 0.9rem;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.forgotBtn:hover {
+  color: #2980b9;
 }
 
 .submitBtn {
   width: 100%;
-  padding: var(--space-md);
-  background-color: var(--primary-color);
+  padding: 12px;
+  background-color: #3498db;
   color: white;
   border: none;
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-md);
+  border-radius: 4px;
+  font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color var(--transition-fast), transform var(--transition-fast);
-  margin-top: var(--space-lg);
+  transition: background-color 0.3s;
+  margin-top: 10px;
 }
 
 .submitBtn:hover {
-  background-color: var(--primary-dark);
-  transform: translateY(-1px);
-}
-
-.submitBtn:active {
-  transform: translateY(0);
+  background-color: #2980b9;
 }
 
 .submitBtn:disabled {
-  background-color: var(--gray-400);
+  background-color: #95a5a6;
   cursor: not-allowed;
-  transform: none;
+}
+
+.error {
+  background-color: #ffecef;
+  color: #e74c3c;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  font-size: 0.9rem;
+}
+
+.success {
+  background-color: #e8f8f5;
+  color: #27ae60;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  font-size: 0.9rem;
+}
+
+.separator {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 20px 0;
+}
+
+.separator::before,
+.separator::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #ddd;
+}
+
+.separator span {
+  padding: 0 10px;
+  color: #7f8c8d;
+  font-size: 0.9rem;
+}
+
+.formToggle {
+  text-align: center;
+  margin-top: 15px;
+}
+
+.toggleBtn {
+  background: none;
+  border: none;
+  color: #3498db;
+  cursor: pointer;
+  font-size: 0.9rem;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.toggleBtn:hover {
+  color: #2980b9;
 }
 
 .switchMode {
@@ -186,20 +278,65 @@
   text-decoration: underline;
 }
 
-.error {
-  background-color: rgba(239, 68, 68, 0.1);
-  color: var(--error-color);
-  padding: var(--space-md);
-  border-radius: var(--radius-md);
-  margin-bottom: var(--space-lg);
-  text-align: center;
-  font-size: var(--font-size-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgba(239, 68, 68, 0.2);
+.googleBtn .icon {
+  color: #df4a32;
 }
 
-.error svg {
-  margin-right: var(--space-xs);
+.linkedinBtn .icon {
+  color: #0077b5;
+}
+
+.githubBtn .icon {
+  color: #333333;
+}
+
+/* Nouveaux styles pour les éléments de formulaire ajoutés */
+.selectInput {
+  width: 100%;
+  padding: 10px 15px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+  background-color: white;
+  appearance: auto;
+  cursor: pointer;
+}
+
+.selectInput:focus {
+  border-color: #3498db;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.checkboxGroup {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.checkboxItem {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.checkboxItem input[type="checkbox"] {
+  width: auto;
+  margin-right: 8px;
+  cursor: pointer;
+}
+
+.checkboxItem label {
+  margin-bottom: 0;
+  font-weight: normal;
+  cursor: pointer;
+}
+
+/* Styles existants */
+.switchMode {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
 } 

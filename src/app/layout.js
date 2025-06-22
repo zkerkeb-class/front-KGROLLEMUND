@@ -17,9 +17,26 @@ export const metadata = {
 };
 
 export default function RootLayout({ children }) {
+  // Script client pour enregistrer la page précédente
+  const storeCurrentPageAsReferer = `
+    (function() {
+      if (typeof window !== 'undefined') {
+        // Ne pas enregistrer les URL de Stripe ou les pages d'erreur
+        if (!window.location.href.includes('stripe.com') &&
+            !window.location.href.includes('/error') &&
+            !window.location.href.includes('/subscription/cancel') &&
+            !window.location.href.includes('/subscription/success')) {
+          sessionStorage.setItem('previousPage', window.location.pathname);
+        }
+      }
+    })();
+  `;
+
   return (
-    <html lang="en">
+    <html lang="fr">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
+        {/* Script pour suivre la navigation */}
+        <script dangerouslySetInnerHTML={{ __html: storeCurrentPageAsReferer }} />
         {children}
       </body>
     </html>

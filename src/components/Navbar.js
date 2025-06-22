@@ -4,14 +4,14 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import styles from '../styles/Navbar.module.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faHome, faFileInvoiceDollar, faLock, faSignOutAlt, faUser } from '@fortawesome/free-solid-svg-icons';
+import { faHome, faFileInvoiceDollar, faLock, faCrown, faUser } from '@fortawesome/free-solid-svg-icons';
+import LogoutButton from './LogoutButton';
 
 export default function Navbar({ user }) {
   const router = useRouter();
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    router.push('/login');
+  const handleSubscribe = () => {
+    router.push('/subscription');
   };
 
   return (
@@ -48,10 +48,21 @@ export default function Navbar({ user }) {
         )}
       </div>
       
-      <button className={styles.logoutBtn} onClick={handleLogout}>
-        <FontAwesomeIcon icon={faSignOutAlt} className={styles.logoutIcon} />
-        <span>Déconnexion</span>
-      </button>
+      <div className={styles.actionButtons}>
+        {user && !user.isSubscribed ? (
+          <button className={styles.subscribeBtn} onClick={handleSubscribe}>
+            <FontAwesomeIcon icon={faCrown} className={styles.subscribeIcon} />
+            <span>S&apos;abonner</span>
+          </button>
+        ) : user && user.isSubscribed ? (
+          <div className={styles.subscribedBadge}>
+            <FontAwesomeIcon icon={faCrown} className={styles.subscribedIcon} />
+            <span>Abonné</span>
+          </div>
+        ) : null}
+        
+        <LogoutButton />
+      </div>
     </nav>
   );
 } 

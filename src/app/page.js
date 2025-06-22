@@ -16,7 +16,21 @@ export default function Home() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const token = localStorage.getItem('token');
+        // Vérifier d'abord le token dans localStorage
+        let token = localStorage.getItem('token');
+        
+        // Si pas de token dans localStorage, vérifier dans les cookies
+        if (!token) {
+          const cookies = document.cookie.split(';');
+          const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('token='));
+          if (tokenCookie) {
+            token = tokenCookie.split('=')[1];
+            // Si trouvé dans cookie mais pas dans localStorage, le stocker dans localStorage
+            localStorage.setItem('token', token);
+            console.log('Token trouvé dans cookie et copié dans localStorage');
+          }
+        }
+        
         if (!token) {
           console.log('Pas de token trouvé, redirection vers login');
           router.push('/login');
@@ -24,13 +38,25 @@ export default function Home() {
         }
 
         console.log('Token trouvé, vérification...');
-        console.log('Token:', token.substring(0, 15) + '...');
+        console.log('Token (début):', token.substring(0, 15) + '...');
         
         try {
           const response = await authService.verify();
           console.log('Réponse de vérification:', response.data);
-          setUser(response.data.user);
-          setError(null);
+          
+          // Mettre à jour les informations utilisateur dans localStorage si nécessaire
+          if (response.data.user) {
+            localStorage.setItem('user', JSON.stringify(response.data.user));
+            
+            // Mettre à jour le cookie isProfileCompleted
+            const isProfileCompleted = response.data.user.isProfileCompleted;
+            document.cookie = `isProfileCompleted=${isProfileCompleted ? 'true' : 'false'}; path=/; max-age=86400`;
+            
+            setUser(response.data.user);
+            setError(null);
+          } else {
+            throw new Error('Utilisateur non trouvé dans la réponse');
+          }
         } catch (initialError) {
           console.error('Erreur de vérification initiale:', initialError);
           

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import styles from '../styles/Navbar.module.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faHome, faFileInvoiceDollar, faLock, faCrown, faUser } from '@fortawesome/free-solid-svg-icons';
+import { faHome, faFileInvoiceDollar, faLock, faCrown, faUser, faUserCog } from '@fortawesome/free-solid-svg-icons';
 import LogoutButton from './LogoutButton';
 
 export default function Navbar({ user }) {
@@ -39,6 +39,10 @@ export default function Navbar({ user }) {
         <Link href="/quote">
           <FontAwesomeIcon icon={faFileInvoiceDollar} className={styles.navIcon} />
           <span>Devis</span>
+        </Link>
+        <Link href="/profile">
+          <FontAwesomeIcon icon={faUserCog} className={styles.navIcon} />
+          <span>Profil</span>
         </Link>
         {user?.isAdmin && (
           <Link href="/backoffice">

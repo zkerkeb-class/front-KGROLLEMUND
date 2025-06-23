@@ -6,48 +6,7 @@ import styles from './complete-profile.module.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { completeProfile } from '@/services/profileService';
-
-// Données des secteurs et spécialités (identiques à celles de AuthForm.js)
-const sectors = [
-  { id: 'development', name: 'Développement' },
-  { id: 'design', name: 'Design' },
-  { id: 'marketing', name: 'Marketing' },
-  { id: 'consulting', name: 'Consulting' },
-  { id: 'projectManagement', name: 'Gestion de projet' },
-];
-
-const specialtiesBySector = {
-  development: [
-    { id: 'frontend', name: 'Développement Frontend' },
-    { id: 'backend', name: 'Développement Backend' },
-    { id: 'fullstack', name: 'Développement Fullstack' },
-    { id: 'mobile', name: 'Développement Mobile' },
-    { id: 'devops', name: 'DevOps' },
-    { id: 'qa', name: 'Assurance Qualité' },
-  ],
-  design: [
-    { id: 'ui', name: 'UI Design' },
-    { id: 'ux', name: 'UX Design' },
-    { id: 'graphic', name: 'Design Graphique' },
-    { id: 'webDesign', name: 'Web Design' },
-  ],
-  marketing: [
-    { id: 'digitalMarketing', name: 'Marketing Digital' },
-    { id: 'contentMarketing', name: 'Marketing de Contenu' },
-    { id: 'seo', name: 'SEO' },
-    { id: 'socialMedia', name: 'Réseaux Sociaux' },
-  ],
-  consulting: [
-    { id: 'businessConsulting', name: 'Conseil en Affaires' },
-    { id: 'techConsulting', name: 'Conseil Technique' },
-    { id: 'strategyConsulting', name: 'Conseil en Stratégie' },
-  ],
-  projectManagement: [
-    { id: 'agile', name: 'Gestion Agile' },
-    { id: 'traditional', name: 'Gestion Traditionnelle' },
-    { id: 'productManagement', name: 'Gestion de Produit' },
-  ],
-};
+import { sectors, specialtiesBySector } from '@/constants/specialties';
 
 export default function CompleteProfile() {
   const router = useRouter();
@@ -62,6 +21,7 @@ export default function CompleteProfile() {
     specialties: [],
     yearsOfExperience: ''
   });
+  const [customSpecialties, setCustomSpecialties] = useState({});
 
   // Vérifier si l'utilisateur est connecté et récupérer ses informations
   useEffect(() => {
@@ -97,6 +57,7 @@ export default function CompleteProfile() {
     if (formData.sector) {
       setAvailableSpecialties(specialtiesBySector[formData.sector] || []);
       setFormData(prev => ({ ...prev, specialties: [] }));
+      setCustomSpecialties({}); // Réinitialiser aussi les spécialités personnalisées
     }
   }, [formData.sector]);
 
@@ -115,13 +76,71 @@ export default function CompleteProfile() {
       
       if (isChecked && !currentSpecialties.includes(value)) {
         currentSpecialties.push(value);
+        // Si on coche une spécialité "autre", initialiser avec un champ vide
+        if (value.includes('autre-') && !customSpecialties[value]) {
+          setCustomSpecialties({
+            ...customSpecialties,
+            [value]: ['']
+          });
+        }
       } else if (!isChecked && currentSpecialties.includes(value)) {
         const index = currentSpecialties.indexOf(value);
         currentSpecialties.splice(index, 1);
+        // Si on décoche une spécialité "autre", supprimer aussi le texte personnalisé
+        if (value.includes('autre-')) {
+          const newCustomSpecialties = { ...customSpecialties };
+          delete newCustomSpecialties[value];
+          setCustomSpecialties(newCustomSpecialties);
+        }
       }
       
       return { ...prev, specialties: currentSpecialties };
     });
+  };
+
+  // Gérer les champs texte pour les spécialités "autre"
+  const handleCustomSpecialtyChange = (specialtyKey, index, value) => {
+    const currentSpecialties = customSpecialties[specialtyKey] || [''];
+    const newSpecialties = [...currentSpecialties];
+    newSpecialties[index] = value;
+    
+    setCustomSpecialties({
+      ...customSpecialties,
+      [specialtyKey]: newSpecialties
+    });
+  };
+
+  // Ajouter un nouveau champ pour une spécialité "autre"
+  const addCustomSpecialty = (specialtyKey) => {
+    const currentSpecialties = customSpecialties[specialtyKey] || [];
+    setCustomSpecialties({
+      ...customSpecialties,
+      [specialtyKey]: [...currentSpecialties, '']
+    });
+  };
+
+  // Supprimer un champ de spécialité "autre"
+  const removeCustomSpecialty = (specialtyKey, index) => {
+    const currentSpecialties = customSpecialties[specialtyKey] || [];
+    const newSpecialties = currentSpecialties.filter((_, i) => i !== index);
+    
+    if (newSpecialties.length === 0) {
+      // Si plus de specialites personnalisees, supprimer la cle et decocher la case
+      const newCustomSpecialties = { ...customSpecialties };
+      delete newCustomSpecialties[specialtyKey];
+      setCustomSpecialties(newCustomSpecialties);
+      
+      // Decocher aussi la case Autres specialites
+      setFormData({
+        ...formData,
+        specialties: formData.specialties.filter(s => s !== specialtyKey)
+      });
+    } else {
+      setCustomSpecialties({
+        ...customSpecialties,
+        [specialtyKey]: newSpecialties
+      });
+    }
   };
 
   const validateForm = () => {
@@ -153,10 +172,28 @@ export default function CompleteProfile() {
     setIsLoading(true);
     
     try {
+      // Préparer les données avec les spécialités personnalisées
+      const finalSpecialties = [];
+      
+      // Traiter chaque spécialité sélectionnée
+      formData.specialties.forEach(specialty => {
+        if (specialty.includes('autre-') && customSpecialties[specialty]) {
+          // Pour les spécialités "autre", on stocke les valeurs personnalisées
+          customSpecialties[specialty].forEach((value) => {
+            if (value.trim()) {
+              finalSpecialties.push(`${specialty}:${value.trim()}`);
+            }
+          });
+        } else {
+          // Pour les spécialités standards, on stocke tel quel
+          finalSpecialties.push(specialty);
+        }
+      });
+
       // Utiliser le service profileService pour compléter le profil
       await completeProfile({
         sector: formData.sector,
-        specialties: formData.specialties,
+        specialties: finalSpecialties,
         yearsOfExperience: parseInt(formData.yearsOfExperience)
       });
       
@@ -243,16 +280,46 @@ export default function CompleteProfile() {
               <label>Spécialités</label>
               <div className={styles.checkboxGroup}>
                 {availableSpecialties.map(specialty => (
-                  <div key={specialty.id} className={styles.checkboxItem}>
+                  <div key={specialty.value} className={styles.checkboxItem}>
                     <input
                       type="checkbox"
-                      id={`specialty-${specialty.id}`}
+                      id={`specialty-${specialty.value}`}
                       name="specialties"
-                      value={specialty.id}
-                      checked={formData.specialties.includes(specialty.id)}
+                      value={specialty.value}
+                      checked={formData.specialties.includes(specialty.value)}
                       onChange={handleSpecialtyChange}
                     />
-                    <label htmlFor={`specialty-${specialty.id}`}>{specialty.name}</label>
+                    <label htmlFor={`specialty-${specialty.value}`}>{specialty.label}</label>
+                    {specialty.value.includes('autre-') && formData.specialties.includes(specialty.value) && (
+                      <div className={styles.customSpecialtyContainer}>
+                        {(customSpecialties[specialty.value] || ['']).map((value, index) => (
+                          <div key={index} className={styles.customSpecialtyRow}>
+                            <input
+                              type="text"
+                              placeholder={`Spécialité ${index + 1}`}
+                              value={value}
+                              onChange={(e) => handleCustomSpecialtyChange(specialty.value, index, e.target.value)}
+                              className={styles.customSpecialtyInput}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeCustomSpecialty(specialty.value, index)}
+                              className={styles.removeButton}
+                              title="Supprimer cette specialite"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => addCustomSpecialty(specialty.value)}
+                          className={styles.addButton}
+                        >
+                          + Ajouter une spécialité
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

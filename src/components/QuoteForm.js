@@ -23,6 +23,7 @@ export default function QuoteForm({ user }) {
   const [previewMode, setPreviewMode] = useState(false);
   const [editedTasks, setEditedTasks] = useState([]);
   const [clientEmail, setClientEmail] = useState('');
+  const [clientName, setClientName] = useState('');
   const [showAnalysisPopup, setShowAnalysisPopup] = useState(false);
   const [showPreviewPopup, setShowPreviewPopup] = useState(false);
   const [showPreviewButton, setShowPreviewButton] = useState(false);
@@ -31,6 +32,61 @@ export default function QuoteForm({ user }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [validationErrors, setValidationErrors] = useState({});
+
+  // Fonction pour extraire les valeurs min et max d'une fourchette
+  const extractRangeValues = (value) => {
+    if (typeof value !== 'string') return { min: value || 0, max: value || 0 };
+    
+    // Nettoyer la valeur (enlever les unités)
+    const cleanValue = value.replace(/[€h]/g, '');
+    
+    // Si c'est une fourchette (ex: "20-30")
+    if (cleanValue.includes('-')) {
+      const parts = cleanValue.split('-');
+      return {
+        min: parseFloat(parts[0]) || 0,
+        max: parseFloat(parts[1]) || parseFloat(parts[0]) || 0
+      };
+    }
+    
+    // Si c'est une valeur simple
+    const numValue = parseFloat(cleanValue) || 0;
+    return { min: numValue, max: numValue };
+  };
+  
+  // Fonction pour calculer les totaux (min et max) à partir des tâches
+  const calculateTotals = (tasks) => {
+    let totalMinHours = 0;
+    let totalMaxHours = 0;
+    let totalMinCost = 0;
+    let totalMaxCost = 0;
+    
+    tasks.forEach(task => {
+      const hoursRange = extractRangeValues(task.estimatedHours);
+      const costRange = extractRangeValues(task.estimatedCost);
+      
+      totalMinHours += hoursRange.min;
+      totalMaxHours += hoursRange.max;
+      totalMinCost += costRange.min;
+      totalMaxCost += costRange.max;
+    });
+    
+    return {
+      hours: `${Math.round(totalMinHours)}-${Math.round(totalMaxHours)}h`,
+      cost: `${Math.round(totalMinCost)}-${Math.round(totalMaxCost)}€`
+    };
+  };
+
+  // Fonction pour afficher une valeur (fourchette ou précise)
+  const displayValue = (value, unit = '') => {
+    // Si la valeur est déjà formatée avec son unité, la retourner telle quelle
+    if (typeof value === 'string' && (value.includes('€') || value.includes('h'))) {
+      return value;
+    }
+    
+    // Sinon, ajouter l'unité
+    return `${value}${unit}`;
+  };
 
   // Récupérer le profil professionnel au chargement
   useEffect(() => {
@@ -88,10 +144,16 @@ export default function QuoteForm({ user }) {
     if (!description.trim()) {
       errors.description = true;
     }
+    if (!clientName.trim()) {
+      errors.clientName = true;
+    }
+    if (!clientEmail.trim()) {
+      errors.clientEmail = true;
+    }
 
     if (Object.keys(errors).length > 0) {
       setValidationErrors(errors);
-      alert('Veuillez renseigner le titre et la description du projet avant l\'analyse');
+      alert('Veuillez renseigner le titre, la description du projet et les informations client avant l\'analyse');
       return;
     }
 
@@ -109,6 +171,7 @@ export default function QuoteForm({ user }) {
       formData.append('userId', user.id);
       formData.append('projectTitle', title);
       formData.append('projectDescription', description);
+      formData.append('isSubscribed', user.isSubscribed || false); // Statut d'abonnement
       if (professionalProfile) {
         formData.append('sector', professionalProfile.sector);
         formData.append('specialties', JSON.stringify(professionalProfile.specialties));
@@ -190,11 +253,6 @@ export default function QuoteForm({ user }) {
     setShowAnalysisPopup(false);
     setShowPreviewButton(false);
     setShowPreviewPopup(true);
-    
-    // Auto-remplir l'email du client avec celui de l'utilisateur connecté
-    if (!clientEmail && user?.email) {
-      setClientEmail(user.email);
-    }
   };
 
   // Fonction pour fermer la pop-up de prévisualisation
@@ -220,14 +278,15 @@ export default function QuoteForm({ user }) {
     setLoading(true);
     
     try {
-      // Calculer les totaux à partir des tâches éditées
-      const totalHours = editedTasks.reduce((sum, task) => sum + Number(task.estimatedHours || 0), 0);
-      const totalCost = editedTasks.reduce((sum, task) => sum + Number(task.estimatedCost || 0), 0);
+      // Calculer les totaux à partir des tâches éditées (gestion des fourchettes)
+      const totalHours = editedTasks.reduce((sum, task) => sum + extractRangeValues(task.estimatedHours).min, 0);
+      const totalCost = editedTasks.reduce((sum, task) => sum + extractRangeValues(task.estimatedCost).min, 0);
       
       // Créer le devis final en base de données avec les données éditées
       const iaResponse = await iaAPI.post('/quote', {
         quoteRequestId,
-        clientEmail: clientEmail || user?.email || '',
+        clientEmail: clientEmail,
+        clientName: clientName,
         updatedTasks: editedTasks,
         totalEstimate: totalCost,
         timeEstimate: totalHours
@@ -246,16 +305,124 @@ export default function QuoteForm({ user }) {
       setLoading(false);
     }
   };
+
+  // Nouvelle fonction pour sauvegarder ET télécharger le PDF
+  const handleSaveAndDownloadPdf = async () => {
+    // Validation des champs obligatoires
+    if (!clientEmail || !clientName) {
+      alert('Veuillez remplir le nom et l\'email du client avant de télécharger le PDF.');
+      return;
+    }
+    
+    // Vérification des données d'analyse
+    if (!aiAnalysis || !quoteRequestId) {
+      alert('Erreur : données d\'analyse manquantes. Veuillez relancer l\'analyse.');
+      return;
+    }
+
+    setLoading(true);
+    
+    try {
+      // Calculer les totaux à partir des tâches éditées (gestion des fourchettes)
+      const totalHours = editedTasks.reduce((sum, task) => sum + extractRangeValues(task.estimatedHours).min, 0);
+      const totalCost = editedTasks.reduce((sum, task) => sum + extractRangeValues(task.estimatedCost).min, 0);
+      
+      // Créer le devis final en base de données avec les données éditées
+      const quoteData = {
+        quoteRequestId,
+        clientEmail,
+        clientName,
+        updatedTasks: editedTasks,
+        totalEstimate: totalCost,
+        timeEstimate: totalHours,
+        projectTitle: title || 'Projet',
+        projectDescription: description || 'Description du projet'
+      };
+      
+      console.log('🚀 Frontend: Sauvegarde + PDF du devis édité');
+      console.log('Données:', quoteData);
+      
+      const quoteResponse = await iaAPI.post('/quote', quoteData);
+      const createdQuote = quoteResponse.data;
+      
+      console.log('✅ Devis créé - ID:', createdQuote.id);
+      
+      // Télécharger le PDF immédiatement
+      const response = await iaAPI.get(`/quotes/pdf/${createdQuote.id}`, {
+        responseType: 'blob'
+      });
+      
+      // Détecter le type de contenu
+      const contentType = response.headers['content-type'];
+      
+      if (contentType.includes('text/html')) {
+        // Si c'est du HTML, ouvrir dans un nouvel onglet pour impression
+        const blob = new Blob([response.data], { type: 'text/html' });
+        const url = window.URL.createObjectURL(blob);
+        const newWindow = window.open(url, '_blank');
+        if (newWindow) {
+          newWindow.focus();
+        }
+        window.URL.revokeObjectURL(url);
+        
+        alert('Le devis s\'ouvre dans un nouvel onglet. Vous pouvez l\'imprimer en PDF depuis votre navigateur (Ctrl+P).');
+      } else {
+        // Créer un lien de téléchargement PDF
+        const blob = new Blob([response.data], { type: 'application/pdf' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `devis-${title.replace(/[^a-zA-Z0-9]/g, '-')}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }
+      
+      // Fermer la popup et mettre à jour l'état
+      setShowEditPopup(false);
+      setShowPreviewButton(true);
+      setQuoteResponse(createdQuote);
+      setPreviewMode(false);
+      
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde et génération du PDF:', error);
+      alert('Une erreur est survenue lors de la sauvegarde et génération du PDF');
+    } finally {
+      setLoading(false);
+    }
+  };
   
   // Fonction pour mettre à jour une tâche
   const handleTaskUpdate = (index, field, value) => {
     const updatedTasks = [...editedTasks];
+    
+    // Mise à jour directe de la valeur (texte ou fourchette)
     updatedTasks[index] = {
       ...updatedTasks[index],
       [field]: value,
       isEdited: true
     };
     setEditedTasks(updatedTasks);
+  };
+
+  // Fonction pour supprimer une tâche
+  const handleRemoveTask = (index) => {
+    const updatedTasks = editedTasks.filter((_, i) => i !== index);
+    setEditedTasks(updatedTasks);
+  };
+
+  // Fonction pour ajouter une nouvelle tâche
+  const handleAddTask = () => {
+    // Créer une nouvelle tâche avec des fourchettes par défaut
+    const newTask = {
+      task: "Nouvelle tâche",
+      description: "Description de la nouvelle tâche",
+      estimatedHours: "20-30h",
+      estimatedCost: "1000-1500€",
+      isEdited: true
+    };
+    setEditedTasks([...editedTasks, newTask]);
   };
 
   // Fonction pour prévisualiser le devis
@@ -292,23 +459,23 @@ export default function QuoteForm({ user }) {
     
     try {
       // Calculer les totaux à partir des tâches éditées
-      const totalHours = editedTasks.reduce((sum, task) => sum + Number(task.estimatedHours || 0), 0);
-      const totalCost = editedTasks.reduce((sum, task) => sum + Number(task.estimatedCost || 0), 0);
+      const totals = calculateTotals(editedTasks);
       
       // Mettre à jour les tâches dans la base de données
       await iaAPI.put(`/quote-requests/${quoteRequestId}/tasks`, {
         tasksEstimation: editedTasks,
-        totalEstimate: totalCost,
-        timeEstimate: totalHours
+        totalEstimate: totals.cost,
+        timeEstimate: totals.hours
       });
       
       // Générer le devis basé sur l'analyse existante et les modifications
       const iaResponse = await iaAPI.post('/quote', {
         quoteRequestId,
         clientEmail,
+        clientName,
         updatedTasks: editedTasks,
-        totalEstimate: totalCost,
-        timeEstimate: totalHours
+        totalEstimate: totals.cost,
+        timeEstimate: totals.hours
       });
       
       setQuoteResponse(iaResponse.data);
@@ -331,8 +498,8 @@ export default function QuoteForm({ user }) {
   // Fonction pour télécharger le devis en PDF directement depuis la pop-up
   const handleDirectPdfDownload = async () => {
     // Validation des champs obligatoires
-    if (!clientEmail) {
-      alert('Veuillez remplir l\'email du client avant de télécharger le PDF.');
+    if (!clientEmail || !clientName) {
+      alert('Veuillez remplir le nom et l\'email du client avant de télécharger le PDF.');
       return;
     }
     
@@ -348,17 +515,17 @@ export default function QuoteForm({ user }) {
       // Utiliser les tâches d'analyse ou éditées
       const tasksToUse = editedTasks.length > 0 ? editedTasks : aiAnalysis.tasksBreakdown || [];
       
-      // Calculer les totaux
-      const totalHours = tasksToUse.reduce((sum, task) => sum + Number(task.estimatedHours || 0), 0);
-      const totalCost = tasksToUse.reduce((sum, task) => sum + Number(task.estimatedCost || 0), 0);
+      // Calculer les totaux avec notre fonction
+      const totals = calculateTotals(tasksToUse);
       
       // Créer le devis final en base de données
       const quoteData = {
         quoteRequestId,
         clientEmail,
+        clientName,
         updatedTasks: tasksToUse,
-        totalEstimate: totalCost,
-        timeEstimate: totalHours,
+        totalEstimate: totals.cost,
+        timeEstimate: totals.hours,
         projectTitle: title || 'Projet',
         projectDescription: description || 'Description du projet'
       };
@@ -494,7 +661,7 @@ export default function QuoteForm({ user }) {
           </div>
           
           <div className={styles.formGroup + ' ' + styles.fullWidth}>
-            <label>Description du projet <span className={styles.required}>*</span></label>
+            <label>Description du besoin client <span className={styles.required}>*</span></label>
             <textarea
               value={description}
               onChange={(e) => {
@@ -506,9 +673,48 @@ export default function QuoteForm({ user }) {
               }}
               rows={3}
               required
-              placeholder="Décrivez brièvement votre projet, ses objectifs et fonctionnalités principales"
+              placeholder="Décrivez brièvement le/les besoins du client"
               className={validationErrors.description ? styles.errorInput : ''}
             />
+          </div>
+          
+          {/* Informations client */}
+          <div className={styles.clientInfoGrid}>
+            <div className={styles.formGroup}>
+              <label>Nom du client <span className={styles.required}>*</span></label>
+              <input
+                type="text"
+                value={clientName}
+                onChange={(e) => {
+                  setClientName(e.target.value);
+                  // Supprimer l'erreur de validation quand l'utilisateur tape
+                  if (validationErrors.clientName && e.target.value.trim()) {
+                    setValidationErrors(prev => ({ ...prev, clientName: false }));
+                  }
+                }}
+                required
+                placeholder="Nom de l'entreprise ou de la personne"
+                className={validationErrors.clientName ? styles.errorInput : ''}
+              />
+            </div>
+            
+            <div className={styles.formGroup}>
+              <label>Email du client <span className={styles.required}>*</span></label>
+              <input
+                type="email"
+                value={clientEmail}
+                onChange={(e) => {
+                  setClientEmail(e.target.value);
+                  // Supprimer l'erreur de validation quand l'utilisateur tape
+                  if (validationErrors.clientEmail && e.target.value.trim()) {
+                    setValidationErrors(prev => ({ ...prev, clientEmail: false }));
+                  }
+                }}
+                required
+                placeholder="email@entreprise.com"
+                className={validationErrors.clientEmail ? styles.errorInput : ''}
+              />
+            </div>
           </div>
           
           <p className={styles.helpText}>
@@ -659,41 +865,80 @@ export default function QuoteForm({ user }) {
                 <span>Tâche</span>
                 <span>Temps (h)</span>
                 <span>Coût (€)</span>
+                <span>Actions</span>
               </div>
               
               {editedTasks.map((task, index) => (
                 <div key={index} className={`${styles.tableRow} ${task.isEdited ? styles.editedRow : ''}`}>
                   <div className={styles.taskInfo}>
-                    <strong>{task.task}</strong>
-                    <p className={styles.taskDescription}>{task.description}</p>
+                    <input
+                      type="text"
+                      className={styles.taskNameInput}
+                      value={task.task}
+                      onChange={(e) => handleTaskUpdate(index, 'task', e.target.value)}
+                      placeholder="Nom de la tâche"
+                    />
+                    <textarea
+                      className={styles.taskDescriptionInput}
+                      value={task.description}
+                      onChange={(e) => handleTaskUpdate(index, 'description', e.target.value)}
+                      placeholder="Description de la tâche"
+                      rows="2"
+                    />
                   </div>
                   
-                  <input
-                    type="number"
-                    className={styles.timeInput}
-                    value={task.estimatedHours}
-                    onChange={(e) => handleTaskUpdate(index, 'estimatedHours', parseInt(e.target.value) || 0)}
-                    min="0"
-                  />
+                  <div className={styles.timeInput}>
+                    <input
+                      type="text"
+                      className={styles.rangeInput}
+                      value={task.estimatedHours}
+                      onChange={(e) => handleTaskUpdate(index, 'estimatedHours', e.target.value)}
+                      placeholder="ex: 20-30h"
+                    />
+                  </div>
                   
-                  <input
-                    type="number"
-                    className={styles.costInput}
-                    value={task.estimatedCost}
-                    onChange={(e) => handleTaskUpdate(index, 'estimatedCost', parseInt(e.target.value) || 0)}
-                    min="0"
-                  />
+                  <div className={styles.costInput}>
+                    <input
+                      type="text"
+                      className={styles.rangeInput}
+                      value={task.estimatedCost}
+                      onChange={(e) => handleTaskUpdate(index, 'estimatedCost', e.target.value)}
+                      placeholder="ex: 1000-1500€"
+                    />
+                  </div>
+                  
+                  <div className={styles.taskActions}>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveTask(index)}
+                      className={styles.removeTaskBtn}
+                      title="Supprimer cette tâche"
+                    >
+                      🗑️
+                    </button>
+                  </div>
                 </div>
               ))}
               
               <div className={styles.tableTotal}>
                 <span className={styles.totalLabel}>Total estimé</span>
                 <span className={styles.totalHours}>
-                  {editedTasks.reduce((sum, task) => sum + Number(task.estimatedHours || 0), 0)}h
+                  {calculateTotals(editedTasks).hours}
                 </span>
                 <span className={styles.totalCost}>
-                  {editedTasks.reduce((sum, task) => sum + Number(task.estimatedCost || 0), 0)}€
+                  {calculateTotals(editedTasks).cost}
                 </span>
+                <span></span>
+              </div>
+              
+              <div className={styles.addTaskRow}>
+                <button
+                  type="button"
+                  onClick={handleAddTask}
+                  className={styles.addTaskBtn}
+                >
+                  ➕ Ajouter une tâche
+                </button>
               </div>
             </div>
             
@@ -769,6 +1014,7 @@ export default function QuoteForm({ user }) {
               </button>
             </div>
             <div className={styles.popupContent + ' ' + styles.previewContent}>
+              
               {aiAnalysis.summary && (
                 <div className={styles.analysisSummary}>
                   <h4>Résumé</h4>
@@ -789,7 +1035,10 @@ export default function QuoteForm({ user }) {
               
               {aiAnalysis.tasksBreakdown && aiAnalysis.tasksBreakdown.length > 0 && (
                 <div className={styles.analysisBreakdown}>
-                  <h4>Estimation par tâche</h4>
+                  <h4>
+                    Estimation par tâche
+                    
+                  </h4>
                   <div className={styles.tasksTable}>
                     <div className={styles.tableHeader}>
                       <span>Tâche</span>
@@ -802,8 +1051,8 @@ export default function QuoteForm({ user }) {
                           <strong>{task.task}</strong>
                           <p className={styles.taskDescription}>{task.description}</p>
                         </div>
-                        <span className={styles.hours}>{task.estimatedHours}h</span>
-                        <span className={styles.cost}>{task.estimatedCost}€</span>
+                        <span className={styles.hours}>{displayValue(task.estimatedHours, 'h')}</span>
+                        <span className={styles.cost}>{displayValue(task.estimatedCost, '€')}</span>
                       </div>
                     ))}
                     
@@ -811,10 +1060,10 @@ export default function QuoteForm({ user }) {
                       <div className={styles.tableTotal}>
                         <span className={styles.totalLabel}>Total estimé</span>
                         <span className={styles.totalHours}>
-                          {aiAnalysis.totalEstimatedHours}h
+                          {displayValue(aiAnalysis.totalEstimatedHours, 'h')}
                         </span>
                         <span className={styles.totalCost}>
-                          {aiAnalysis.totalEstimatedCost}€
+                          {displayValue(aiAnalysis.totalEstimatedCost, '€')}
                         </span>
             </div>
           )}
@@ -832,9 +1081,9 @@ export default function QuoteForm({ user }) {
             <div className={styles.popupActions + ' ' + styles.previewActions}>
               <button
                 onClick={handleDirectPdfDownload}
-                disabled={loading || !clientEmail}
+                disabled={loading || !clientEmail || !clientName}
                 className={styles.downloadBtn}
-                title={(!clientEmail) ? "Veuillez remplir les informations client" : ""}
+                title={(!clientEmail || !clientName) ? "Veuillez remplir les informations client" : ""}
               >
                 {loading ? 'Génération...' : '📄 Télécharger PDF'}
               </button>
@@ -871,7 +1120,7 @@ export default function QuoteForm({ user }) {
       {/* Pop-up d'édition du devis */}
       {showEditPopup && (
         <div className={styles.popupOverlay}>
-          <div className={styles.editPopup}>
+          <div className={styles.popup + ' ' + styles.largePopup}>
             <div className={styles.popupHeader}>
               <h3>✏️ Édition du devis</h3>
               <button
@@ -881,12 +1130,18 @@ export default function QuoteForm({ user }) {
                 ✕
               </button>
             </div>
-            <div className={styles.popupContent}>
+            <div className={styles.popupContent + ' ' + styles.previewContent}>
+              
               {/* Édition des tâches */}
-        <div className={styles.section}>
-                <h4>Édition des estimations</h4>
-                                 <p className={styles.helpText}>
+              <div className={styles.section}>
+                <h4>✏️ Édition des estimations</h4>
+                <p className={styles.helpText}>
                    Modifiez les estimations générées par l&apos;IA selon vos besoins.
+                   {!user?.isSubscribed && (
+                     <span className={styles.upgradeHint}>
+                       💡 <strong>Passez à l&apos;abonnement Premium</strong> pour obtenir des estimations précises au lieu de fourchettes !
+                     </span>
+                   )}
                  </p>
                 
                 <div className={styles.tasksTable + ' ' + styles.editableTable}>
@@ -894,114 +1149,107 @@ export default function QuoteForm({ user }) {
                     <span>Tâche</span>
                     <span>Temps (h)</span>
                     <span>Coût (€)</span>
-                </div>
+                    <span>Actions</span>
+                  </div>
                 
                   {editedTasks.map((task, index) => (
                     <div key={index} className={`${styles.tableRow} ${task.isEdited ? styles.editedRow : ''}`}>
                       <div className={styles.taskInfo}>
-                        <strong>{task.task}</strong>
-                        <p className={styles.taskDescription}>{task.description}</p>
-                </div>
+                        <input
+                          type="text"
+                          className={styles.taskNameInput}
+                          value={task.task}
+                          onChange={(e) => handleTaskUpdate(index, 'task', e.target.value)}
+                          placeholder="Nom de la tâche"
+                        />
+                        <textarea
+                          className={styles.taskDescriptionInput}
+                          value={task.description}
+                          onChange={(e) => handleTaskUpdate(index, 'description', e.target.value)}
+                          placeholder="Description de la tâche"
+                          rows="2"
+                        />
+                      </div>
                 
-                      <input
-                        type="number"
-                        className={styles.timeInput}
-                        value={task.estimatedHours}
-                        onChange={(e) => handleTaskUpdate(index, 'estimatedHours', parseInt(e.target.value) || 0)}
-                        min="0"
-                      />
+                      {/* Afficher différemment selon que c'est une fourchette ou une valeur précise */}
+                      <div className={styles.timeInput}>
+                        <input
+                          type="text"
+                          className={styles.rangeInput}
+                          value={task.estimatedHours}
+                          onChange={(e) => handleTaskUpdate(index, 'estimatedHours', e.target.value)}
+                          placeholder="ex: 20-30h"
+                        />
+                      </div>
                       
-                  <input
-                        type="number"
-                        className={styles.costInput}
-                        value={task.estimatedCost}
-                        onChange={(e) => handleTaskUpdate(index, 'estimatedCost', parseInt(e.target.value) || 0)}
-                        min="0"
-                      />
+                      {/* Même chose pour le coût */}
+                      <div className={styles.costInput}>
+                        <input
+                          type="text"
+                          className={styles.rangeInput}
+                          value={task.estimatedCost}
+                          onChange={(e) => handleTaskUpdate(index, 'estimatedCost', e.target.value)}
+                          placeholder="ex: 1000-1500€"
+                        />
+                      </div>
+                      
+                      <div className={styles.taskActions}>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveTask(index)}
+                          className={styles.removeTaskBtn}
+                          title="Supprimer cette tâche"
+                        >
+                          🗑️
+                        </button>
+                      </div>
                     </div>
                   ))}
                   
                   <div className={styles.tableTotal}>
                     <span className={styles.totalLabel}>Total estimé</span>
                     <span className={styles.totalHours}>
-                      {editedTasks.reduce((sum, task) => sum + Number(task.estimatedHours || 0), 0)}h
+                      {calculateTotals(editedTasks).hours}
                     </span>
                     <span className={styles.totalCost}>
-                      {editedTasks.reduce((sum, task) => sum + Number(task.estimatedCost || 0), 0)}€
+                      {calculateTotals(editedTasks).cost}
                     </span>
+                    <span></span>
+                  </div>
+                  
+                  <div className={styles.addTaskRow}>
+                    <button
+                      type="button"
+                      onClick={handleAddTask}
+                      className={styles.addTaskBtn}
+                    >
+                      ➕ Ajouter une tâche
+                    </button>
                   </div>
                 </div>
                 </div>
               </div>
               
-            <div className={styles.popupActions}>
+            <div className={styles.popupActions + ' ' + styles.previewActions}>
               <button
-                onClick={handleSaveEditedQuote}
-                disabled={loading}
-                className={styles.submitBtn}
+                onClick={handleSaveAndDownloadPdf}
+                disabled={loading || !clientEmail || !clientName}
+                className={styles.downloadBtn}
+                title={(!clientEmail || !clientName) ? "Veuillez remplir les informations client" : ""}
               >
-                {loading ? 'Sauvegarde...' : '💾 Sauvegarder le devis'}
+                {loading ? 'Génération...' : '💾📄 Sauvegarder & Télécharger PDF'}
               </button>
               <button
                 onClick={handleCloseEditPopup}
                 className={styles.closeBtn}
               >
-                Annuler
+                Fermer
               </button>
             </div>
           </div>
         </div>
       )}
       
-      {/* Affichage du devis */}
-      {quoteResponse && (
-        <div className={styles.quoteResult}>
-          <h2>Devis généré</h2>
-          
-          <div className={styles.quoteActions}>
-            <button 
-              onClick={downloadQuoteAsPdf} 
-              className={styles.downloadBtn}
-            >
-              Télécharger en PDF
-            </button>
-          </div>
-          
-          <div className={styles.estimates}>
-            {quoteResponse.estimates.map((estimate, index) => (
-              <div key={index} className={styles.estimateItem}>
-                <h3>{estimate.featureName}</h3>
-                
-                {estimate.priceRange ? (
-                  <p className={styles.price}>
-                    Prix estimé: {estimate.priceRange.min}€ - {estimate.priceRange.max}€
-                  </p>
-                ) : (
-                  <p className={styles.price}>Prix fixe: {estimate.fixedPrice}€</p>
-                )}
-                
-                {estimate.estimatedHours && (
-                  <p className={styles.hours}>
-                    Temps estimé: {estimate.estimatedHours.min}h - {estimate.estimatedHours.max}h
-                  </p>
-                )}
-                
-                <p className={styles.explanation}>{estimate.explanation}</p>
-              </div>
-            ))}
-            
-            <div className={styles.total}>
-              <h3>Total</h3>
-              
-              {quoteResponse.totalPriceRange ? (
-                <p>{quoteResponse.totalPriceRange.min}€ - {quoteResponse.totalPriceRange.max}€</p>
-              ) : (
-                <p>{quoteResponse.totalPrice}€</p>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 } 

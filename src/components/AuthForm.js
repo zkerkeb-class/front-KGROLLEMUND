@@ -9,48 +9,6 @@ import { faGoogle, faLinkedin, faGithub } from '@fortawesome/free-brands-svg-ico
 import { faEye, faEyeSlash, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import Link from 'next/link';
 
-// Données des secteurs et spécialités
-const sectors = [
-  { id: 'development', name: 'Développement' },
-  { id: 'design', name: 'Design' },
-  { id: 'marketing', name: 'Marketing' },
-  { id: 'consulting', name: 'Consulting' },
-  { id: 'projectManagement', name: 'Gestion de projet' },
-];
-
-const specialtiesBySector = {
-  development: [
-    { id: 'frontend', name: 'Développement Frontend' },
-    { id: 'backend', name: 'Développement Backend' },
-    { id: 'fullstack', name: 'Développement Fullstack' },
-    { id: 'mobile', name: 'Développement Mobile' },
-    { id: 'devops', name: 'DevOps' },
-    { id: 'qa', name: 'Assurance Qualité' },
-  ],
-  design: [
-    { id: 'ui', name: 'UI Design' },
-    { id: 'ux', name: 'UX Design' },
-    { id: 'graphic', name: 'Design Graphique' },
-    { id: 'webDesign', name: 'Web Design' },
-  ],
-  marketing: [
-    { id: 'digitalMarketing', name: 'Marketing Digital' },
-    { id: 'contentMarketing', name: 'Marketing de Contenu' },
-    { id: 'seo', name: 'SEO' },
-    { id: 'socialMedia', name: 'Réseaux Sociaux' },
-  ],
-  consulting: [
-    { id: 'businessConsulting', name: 'Conseil en Affaires' },
-    { id: 'techConsulting', name: 'Conseil Technique' },
-    { id: 'strategyConsulting', name: 'Conseil en Stratégie' },
-  ],
-  projectManagement: [
-    { id: 'agile', name: 'Gestion Agile' },
-    { id: 'traditional', name: 'Gestion Traditionnelle' },
-    { id: 'productManagement', name: 'Gestion de Produit' },
-  ],
-};
-
 export default function AuthForm() {
   const router = useRouter();
   const [isLogin, setIsLogin] = useState(true);

@@ -116,10 +116,10 @@ export default function ProfilePage() {
       });
       setCustomSpecialties({}); // Réinitialiser aussi les spécialités personnalisées
     } else {
-      setProfile({
-        ...profile,
-        [name]: value
-      });
+    setProfile({
+      ...profile,
+      [name]: value
+    });
     }
   };
 

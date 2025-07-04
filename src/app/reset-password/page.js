@@ -5,14 +5,14 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { authService } from '@/utils/api';
 import styles from './reset-password.module.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEye, faEyeSlash, faSpinner, faCheck, faExclamationTriangle, faMobileAlt, faEnvelope } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faEyeSlash, faSpinner, faCheck, faExclamationTriangle, faEnvelope } from '@fortawesome/free-solid-svg-icons';
 import Link from 'next/link';
 
 export default function ResetPassword() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [email, setEmail] = useState(searchParams.get('email') || '');
   const [resetCode, setResetCode] = useState('');
   const [tempToken, setTempToken] = useState('');
   const [userId, setUserId] = useState('');
@@ -24,37 +24,6 @@ export default function ResetPassword() {
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState('request-reset');
   
-  // Fonction pour formater automatiquement le numéro de téléphone (même que dans AuthForm)
-  const formatPhoneNumber = (phone) => {
-    if (!phone) return '';
-    
-    // Supprimer tous les espaces, tirets, points, parenthèses
-    let cleaned = phone.replace(/[\s\-\.\(\)]/g, '');
-    
-    // Si ça commence déjà par +, garder tel quel
-    if (cleaned.startsWith('+')) {
-      return cleaned;
-    }
-    
-    // Si ça commence par 0 (numéro français), remplacer par +33
-    if (cleaned.startsWith('0')) {
-      return '+33' + cleaned.substring(1);
-    }
-    
-    // Si ça commence par 33 (sans le +), ajouter le +
-    if (cleaned.startsWith('33')) {
-      return '+' + cleaned;
-    }
-    
-    // Si c'est un numéro à 10 chiffres qui commence par 6 ou 7 (mobile français)
-    if (cleaned.length === 10 && (cleaned.startsWith('6') || cleaned.startsWith('7'))) {
-      return '+33' + cleaned;
-    }
-    
-    // Pour les autres cas, laisser tel quel
-    return cleaned;
-  };
-  
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
@@ -63,17 +32,16 @@ export default function ResetPassword() {
     e.preventDefault();
     setError('');
     
-    if (!phoneNumber) {
-      setError('Veuillez entrer votre numéro de téléphone.');
+    if (!email) {
+      setError('Veuillez entrer votre adresse email.');
       return;
     }
     
     setIsLoading(true);
     
     try {
-      await authService.requestPasswordReset({
-        phoneNumber: formatPhoneNumber(phoneNumber),
-        method: 'sms'
+      await authService.requestPasswordResetByEmail({
+        email: email
       });
       
       setStep('enter-code');
@@ -98,7 +66,7 @@ export default function ResetPassword() {
     setIsLoading(true);
     
     try {
-      const response = await authService.verifyResetCode(formatPhoneNumber(phoneNumber), resetCode);
+      const response = await authService.verifyResetCode(email, resetCode);
       
       // Stocker le token temporaire et l'ID utilisateur
       setTempToken(response.tempToken);
@@ -132,7 +100,7 @@ export default function ResetPassword() {
     
     try {
       if (tempToken && userId) {
-        // Méthode par SMS (code)
+        // Méthode par email (code)
         await authService.resetPasswordWithCode(tempToken, userId, password);
       } else {
         throw new Error('Informations de réinitialisation manquantes.');
@@ -184,16 +152,18 @@ export default function ResetPassword() {
         {step === 'request-reset' && (
           <form onSubmit={handleRequestReset}>
             <div className={styles.formGroup}>
-              <label htmlFor="phoneNumber">Numéro de téléphone</label>
-              <input
-                type="tel"
-                id="phoneNumber"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(formatPhoneNumber(e.target.value))}
-                placeholder="Votre numéro de téléphone"
-                required
-              />
-              <small>Format: 06XXXXXXXX ou +33XXXXXXXXX</small>
+              <label htmlFor="email">Adresse email</label>
+              <div className={styles.inputWithIcon}>
+                <FontAwesomeIcon icon={faEnvelope} className={styles.inputIcon} />
+                <input
+                  type="email"
+                  id="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Votre adresse email"
+                  required
+                />
+              </div>
             </div>
             
             <button 
@@ -225,10 +195,10 @@ export default function ResetPassword() {
                 id="resetCode"
                 value={resetCode}
                 onChange={(e) => setResetCode(e.target.value)}
-                placeholder="Entrez le code reçu par SMS"
+                placeholder="Entrez le code reçu par email"
                 required
               />
-              <small>Le code a été envoyé au numéro {formatPhoneNumber(phoneNumber)}</small>
+              <small>Le code a été envoyé à l&apos;adresse {email}</small>
             </div>
             
             <button 
@@ -261,7 +231,7 @@ export default function ResetPassword() {
               <label htmlFor="password">Nouveau mot de passe</label>
               <div className={styles.passwordInput}>
                 <input
-                  type={showPassword ? "text" : "password"}
+                  type={showPassword ? 'text' : 'password'}
                   id="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -269,9 +239,9 @@ export default function ResetPassword() {
                   required
                 />
                 <button 
-                  type="button" 
-                  className={styles.togglePassword}
+                  type="button"
                   onClick={togglePasswordVisibility}
+                  className={styles.togglePassword}
                 >
                   <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
                 </button>
@@ -280,16 +250,14 @@ export default function ResetPassword() {
             
             <div className={styles.formGroup}>
               <label htmlFor="confirmPassword">Confirmer le mot de passe</label>
-              <div className={styles.passwordInput}>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  id="confirmPassword"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Confirmez votre nouveau mot de passe"
-                  required
-                />
-              </div>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                id="confirmPassword"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirmez votre nouveau mot de passe"
+                required
+              />
             </div>
             
             <button 
@@ -303,6 +271,16 @@ export default function ResetPassword() {
                 'Réinitialiser le mot de passe'
               )}
             </button>
+            
+            <div className={styles.backToLogin}>
+              <button 
+                type="button"
+                className={styles.link}
+                onClick={() => setStep('enter-code')}
+              >
+                Retour
+              </button>
+            </div>
           </form>
         )}
       </div>

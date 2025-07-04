@@ -50,6 +50,11 @@ export default function Navbar({ user }) {
             <span>Administration</span>
           </Link>
         )}
+        {user?.isAdmin && (
+          <Link href="/metrics" className={styles.navLink}>
+            Métriques
+          </Link>
+        )}
       </div>
       
       <div className={styles.actionButtons}>

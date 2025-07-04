@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import styles from './backoffice.module.css';
+import { authAPI, dbAPI, paymentAPI } from '@/services/axiosConfig';
+// import styles from './backoffice.module.css';
 
 export default function Backoffice() {
   const router = useRouter();
@@ -10,38 +11,31 @@ export default function Backoffice() {
   const [quotes, setQuotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const { data } = await authAPI.get('/auth/verify');
+        if (data.user) {
+          setUser(data.user);
+        } else {
+          setError('Utilisateur non trouvé');
+        }
+      } catch (err) {
+        setError('Accès non autorisé');
+        console.error(err);
+      }
+    };
+
+    fetchUser();
+  }, []);
 
   useEffect(() => {
     // Vérifier si l'utilisateur est admin
     const token = localStorage.getItem('token');
     if (token) {
-      fetch('http://localhost:3001/api/auth/verify', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      .then(res => {
-        if (res.ok) return res.json();
-        throw new Error('Token invalide');
-      })
-      .then(data => {
-        if (!data.user.isAdmin) {
-          router.push('/');
-          throw new Error('Accès non autorisé');
-        }
-        return fetchData(token);
-      })
-      .catch(err => {
-        console.error('Erreur:', err);
-        setError(err.message);
-        if (err.message === 'Token invalide') {
-          localStorage.removeItem('token');
-          router.push('/login');
-        }
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+      fetchData(token);
     } else {
       router.push('/login');
     }
@@ -49,54 +43,30 @@ export default function Backoffice() {
 
   const fetchData = async (token) => {
     try {
-      // Récupérer la liste des utilisateurs
-      const usersResponse = await fetch('http://localhost:3001/api/users', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      setLoading(true);
+      // Utiliser les instances Axios pour les requêtes
+      const [usersResponse, quotesResponse] = await Promise.all([
+        dbAPI.get('/users'),
+        paymentAPI.get('/quotes')
+      ]);
       
-      if (!usersResponse.ok) throw new Error('Erreur lors de la récupération des utilisateurs');
-      const usersData = await usersResponse.json();
-      setUsers(usersData);
-      
-      // Récupérer la liste des devis
-      const quotesResponse = await fetch('http://localhost:3002/api/quotes', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (!quotesResponse.ok) throw new Error('Erreur lors de la récupération des devis');
-      const quotesData = await quotesResponse.json();
-      setQuotes(quotesData);
+      setUsers(usersResponse.data);
+      setQuotes(quotesResponse.data);
+      setError('');
     } catch (err) {
-      console.error('Erreur:', err);
-      setError(err.message);
+      setError('Erreur lors de la récupération des données');
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
   const toggleUserSubscription = async (userId, isSubscribed) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:3001/api/users/${userId}/subscription`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ isSubscribed: !isSubscribed })
-      });
-      
-      if (!response.ok) throw new Error('Erreur lors de la mise à jour de l\'abonnement');
-      
-      // Mettre à jour la liste des utilisateurs
-      setUsers(users.map(user => 
-        user.id === userId ? { ...user, isSubscribed: !isSubscribed } : user
-      ));
+      const { data } = await dbAPI.post(`/users/${userId}/subscription`, { isSubscribed: !isSubscribed });
+      setUsers(users.map(u => (u.id === userId ? data : u)));
     } catch (err) {
-      console.error('Erreur:', err);
-      alert(err.message);
+      console.error('Erreur lors de la mise à jour de l\'abonnement', err);
     }
   };
 

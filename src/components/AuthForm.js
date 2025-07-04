@@ -21,7 +21,6 @@ export default function AuthForm() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    phoneNumber: '',
     password: '',
     confirmPassword: ''
   });
@@ -34,47 +33,10 @@ export default function AuthForm() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    
-    // Auto-formatage du numéro de téléphone
-    if (name === 'phoneNumber') {
-      const formattedPhone = formatPhoneNumber(value);
-      setFormData(prev => ({ ...prev, [name]: formattedPhone }));
-    } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
-    }
+    setFormData(prev => ({ ...prev, [name]: value }));
     setError('');
   };
 
-  // Fonction pour formater automatiquement le numéro de téléphone
-  const formatPhoneNumber = (phone) => {
-    if (!phone) return '';
-    
-    // Supprimer tous les espaces, tirets, points, parenthèses
-    let cleaned = phone.replace(/[\s\-\.\(\)]/g, '');
-    
-    // Si ça commence déjà par +, garder tel quel
-    if (cleaned.startsWith('+')) {
-      return cleaned;
-    }
-    
-    // Si ça commence par 0 (numéro français), remplacer par +33
-    if (cleaned.startsWith('0')) {
-      return '+33' + cleaned.substring(1);
-    }
-    
-    // Si ça commence par 33 (sans le +), ajouter le +
-    if (cleaned.startsWith('33')) {
-      return '+' + cleaned;
-    }
-    
-    // Si c'est un numéro à 10 chiffres qui commence par 6 ou 7 (mobile français)
-    if (cleaned.length === 10 && (cleaned.startsWith('6') || cleaned.startsWith('7'))) {
-      return '+33' + cleaned;
-    }
-    
-    // Pour les autres cas, laisser tel quel (l'utilisateur saisit un numéro international)
-    return cleaned;
-  };
 
   const handleOAuthLogin = (provider) => {
     // Ne plus bloquer les connexions OAuth
@@ -174,7 +136,6 @@ export default function AuthForm() {
           formData.name, 
           formData.email, 
           formData.password,
-          formData.phoneNumber
         );
         
         if (response.token) {
@@ -237,22 +198,6 @@ export default function AuthForm() {
           />
         </div>
         
-        {!isLogin && (
-          <div className={styles.formGroup}>
-            <label htmlFor="phoneNumber">Numéro de téléphone</label>
-            <input
-              type="tel"
-              id="phoneNumber"
-              name="phoneNumber"
-              value={formData.phoneNumber}
-              onChange={handleChange}
-              placeholder="Ex: 0612345678 (sera formaté en +33612345678)"
-            />
-            <small style={{ color: '#666', fontSize: '0.8em' }}>
-              Les numéros français sont automatiquement formatés au format international (+33)
-            </small>
-          </div>
-        )}
         
         <div className={styles.formGroup}>
           <label htmlFor="password">Mot de passe</label>

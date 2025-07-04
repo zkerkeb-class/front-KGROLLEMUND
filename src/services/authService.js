@@ -1,9 +1,9 @@
 import { authAPI, dbAPI } from './axiosConfig';
 
 // Services d'authentification
-export const login = (credentials) => authAPI.post('/auth/login', credentials);
-export const register = (userData) => authAPI.post('/auth/register', userData);
-export const verify = () => authAPI.get('/auth/verify');
+export const login = (credentials) => authAPI.post('/login', credentials);
+export const register = (userData) => authAPI.post('/register', userData);
+export const verify = () => authAPI.get('/verify');
 export const logout = async () => {
   try {
     // Obtenir le provider depuis le token si possible
@@ -23,7 +23,7 @@ export const logout = async () => {
     }
     
     // Appeler l'API de déconnexion du serveur avec le provider
-    const response = await authAPI.post('/auth/logout', { provider });
+    const response = await authAPI.post('/logout', { provider });
     console.log('Réponse du serveur de déconnexion:', response.data);
     
     // Supprimer le token JWT du stockage local
@@ -48,9 +48,9 @@ export const logout = async () => {
 };
 
 // URLs pour les redirections OAuth
-export const getGoogleAuthUrl = () => `${authAPI.defaults.baseURL}/auth/google`;
-export const getLinkedInAuthUrl = () => `${authAPI.defaults.baseURL}/auth/linkedin`;
-export const getGithubAuthUrl = () => `${authAPI.defaults.baseURL}/auth/github`;
+export const getGoogleAuthUrl = () => `${authAPI.defaults.baseURL}/google`;
+export const getLinkedInAuthUrl = () => `${authAPI.defaults.baseURL}/linkedin`;
+export const getGithubAuthUrl = () => `${authAPI.defaults.baseURL}/github`;
 
 // Fonction pour récupérer les informations de l'utilisateur connecté
 export const getUser = async () => {

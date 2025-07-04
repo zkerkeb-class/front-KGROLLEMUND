@@ -1,8 +1,9 @@
 import axios from 'axios';
 
-// Define API service URLs sans préfixes
-const AUTH_SERVICE_URL = process.env.NEXT_PUBLIC_AUTH_SERVICE_URL || 'http://localhost:3001';
-const DB_SERVICE_URL = process.env.NEXT_PUBLIC_DB_SERVICE_URL || 'http://localhost:3004';
+// URL des services
+console.log('process.env.NEXT_PUBLIC_AUTH_SERVICE_URL:', process.env.NEXT_PUBLIC_AUTH_SERVICE_URL);
+const AUTH_SERVICE_URL = process.env.NEXT_PUBLIC_AUTH_API_URL;
+const DB_SERVICE_URL = process.env.NEXT_PUBLIC_DB_API_URL;
 
 // Affichage des URLs pour debug
 console.log('Configuration API:');
@@ -108,13 +109,13 @@ export const authService = {
   getGithubAuthUrl: () => `${AUTH_SERVICE_URL}/api/auth/github`,
   
   // Nouvelles méthodes pour l'authentification classique
-  register: async (name, email, password, phoneNumber) => {
+  register: async (name, email, password) => {
     const response = await fetch(`${AUTH_SERVICE_URL}/api/auth/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ name, email, password, phoneNumber }),
+      body: JSON.stringify({ name, email, password }),
     });
     
     if (!response.ok) {
@@ -137,40 +138,6 @@ export const authService = {
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.message || 'Erreur lors de la connexion');
-    }
-    
-    return response.json();
-  },
-  
-  requestPasswordReset: async (data) => {
-    const response = await fetch(`${AUTH_SERVICE_URL}/api/auth/request-password-reset`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-    
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Erreur lors de la demande de réinitialisation');
-    }
-    
-    return response.json();
-  },
-  
-  verifyResetCode: async (phoneNumber, resetCode) => {
-    const response = await fetch(`${AUTH_SERVICE_URL}/api/auth/verify-reset-code`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ phoneNumber, resetCode }),
-    });
-    
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Code de réinitialisation invalide');
     }
     
     return response.json();
@@ -208,6 +175,16 @@ export const authService = {
     }
     
     return response.json();
+  },
+
+  // Demander une réinitialisation de mot de passe par email
+  async requestPasswordResetByEmail(data) {
+    try {
+      const response = await axios.post(`${AUTH_SERVICE_URL}/request-password-reset-email`, data);
+      return response.data;
+    } catch (error) {
+      handleApiError(error);
+    }
   },
 };
 

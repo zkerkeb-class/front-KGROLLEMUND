@@ -12,7 +12,7 @@ export const completeProfile = async (profileData) => {
     const user = JSON.parse(userString);
     
     // Mettre à jour le secteur d'activité et marquer le profil comme complété
-    await dbAPI.put(`/api/users/${user.id}`, {
+    await dbAPI.put(`/users/${user.id}`, {
       sector: profileData.sector,
       isProfileCompleted: true
     });
@@ -20,10 +20,10 @@ export const completeProfile = async (profileData) => {
     // Vérifier si un profil professionnel existe déjà
     try {
       // Tenter de récupérer le profil existant
-      await dbAPI.get(`/api/professional-profiles/user/${user.id}`);
+      await dbAPI.get(`/professional-profiles/user/${user.id}`);
       
       // Si le profil existe, le mettre à jour
-      return await dbAPI.put(`/api/professional-profiles/${user.id}`, {
+      return await dbAPI.put(`/professional-profiles/${user.id}`, {
         sector: profileData.sector,
         specialties: profileData.specialties,
         yearsOfExperience: profileData.yearsOfExperience
@@ -31,7 +31,7 @@ export const completeProfile = async (profileData) => {
     } catch (error) {
       // Si le profil n'existe pas (erreur 404), le créer
       if (error.response && error.response.status === 404) {
-        return await dbAPI.post('/api/professional-profiles', {
+        return await dbAPI.post('/professional-profiles', {
           userId: user.id,
           sector: profileData.sector,
           specialties: profileData.specialties,
@@ -73,7 +73,7 @@ export const getUserProfile = async () => {
     
     // Récupérer le profil professionnel
     try {
-      const profileResponse = await dbAPI.get(`/api/professional-profiles/user/${user.id}`);
+      const profileResponse = await dbAPI.get(`/professional-profiles/user/${user.id}`);
       console.log('Profil professionnel récupéré avec succès:', profileResponse.data);
       return profileResponse.data;
     } catch (apiError) {
@@ -105,7 +105,7 @@ export const updateProfile = async (profileData) => {
     const user = JSON.parse(userString);
     
     // Mettre à jour le profil
-    const response = await dbAPI.put(`/api/professional-profiles/${user.id}`, profileData);
+    const response = await dbAPI.put(`/professional-profiles/${user.id}`, profileData);
     return response.data;
   } catch (error) {
     console.error('Erreur lors de la mise à jour du profil:', error);

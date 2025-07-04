@@ -10,6 +10,7 @@ import { sectors, specialtiesBySector } from '@/constants/specialties';
 import styles from './profile.module.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCrown, faTimesCircle, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import ConfirmModal from '../../components/ConfirmModal';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -23,11 +24,10 @@ export default function ProfilePage() {
   const [customSpecialties, setCustomSpecialties] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [error, setError] = useState('');
   const [subscriptionStatus, setSubscriptionStatus] = useState(null);
   const [isUnsubscribing, setIsUnsubscribing] = useState(false);
-
-
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   // Charger les données de l'utilisateur et son profil
   useEffect(() => {
@@ -42,6 +42,7 @@ export default function ProfilePage() {
         // Vérifier l'authentification
         const authResponse = await verify();
         const userData = authResponse.data.user;
+        console.log('LOG: User data fetched', userData);
         setUser(userData);
 
         // Récupérer le profil développeur s'il existe
@@ -86,6 +87,7 @@ export default function ProfilePage() {
         if (userData.isSubscribed && userData.subscriptionId) {
           try {
             const subscriptionResponse = await subscriptionService.checkSubscriptionStatus(userData.subscriptionId);
+            console.log('LOG: Subscription status fetched', subscriptionResponse);
             setSubscriptionStatus(subscriptionResponse);
           } catch (subscriptionError) {
             console.error('Erreur lors de la récupération du statut d&apos;abonnement:', subscriptionError);
@@ -213,7 +215,7 @@ export default function ProfilePage() {
     e.preventDefault();
     setIsSubmitting(true);
     setSuccessMessage('');
-    setErrorMessage('');
+    setError('');
 
     try {
       // Préparer les données avec les spécialités personnalisées
@@ -268,7 +270,7 @@ export default function ProfilePage() {
       }, 2000);
     } catch (error) {
       console.error('Erreur lors de l&apos;enregistrement du profil:', error);
-      setErrorMessage('Une erreur est survenue lors de l&apos;enregistrement de votre profil.');
+      setError('Une erreur est survenue lors de l&apos;enregistrement de votre profil.');
     } finally {
       setIsSubmitting(false);
     }
@@ -276,38 +278,44 @@ export default function ProfilePage() {
 
   // Gérer le désabonnement
   const handleUnsubscribe = async () => {
-    if (!confirm('Êtes-vous sûr de vouloir vous désabonner ? Vous perdrez l&apos;accès aux fonctionnalités premium.')) {
+    // La logique originale, qui fonctionnait
+    if (!user || !user.subscriptionId) {
+      setError('Impossible de trouver les informations d&apos;abonnement.');
       return;
     }
-
+    
+    // Fermer la modale et exécuter la logique
+    setShowConfirmModal(false);
     setIsUnsubscribing(true);
-    setErrorMessage('');
-
+    setError(null);
+    
     try {
       await subscriptionService.cancelSubscription(user.subscriptionId);
+      
       setSuccessMessage('Votre abonnement a été annulé avec succès. Il restera actif jusqu&apos;à la fin de la période en cours.');
       
-      // Mettre à jour l'utilisateur localement
-      setUser({
-        ...user,
-        isSubscribed: false
-      });
+      // Recharger la page pour afficher le statut mis à jour
+      window.location.reload();
       
-      // Recharger les données pour avoir les informations à jour
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
-    } catch (error) {
-      console.error('Erreur lors du désabonnement:', error);
-      setErrorMessage('Une erreur est survenue lors du désabonnement. Veuillez réessayer.');
+    } catch (err) {
+      console.error('Erreur lors de l&apos;annulation de l&apos;abonnement:', err);
+      setError(err.response?.data?.message || 'Une erreur est survenue lors de l&apos;annulation.');
     } finally {
       setIsUnsubscribing(false);
     }
   };
 
+  const openUnsubscribeModal = () => {
+    setShowConfirmModal(true);
+  };
+
   if (loading) {
     return <div className={styles.loading}>Chargement...</div>;
   }
+
+  // LOGS pour le rendu
+  console.log('LOG: Rendering component with state:');
+  console.log('LOG: user.isSubscribed ->', user?.isSubscribed);
 
   return (
     <div className={styles.container}>
@@ -333,32 +341,21 @@ export default function ProfilePage() {
                   <FontAwesomeIcon icon={faInfoCircle} className={styles.infoIcon} />
                   <div>
                     <p><strong>Vous êtes abonné au service premium</strong></p>
-                    {subscriptionStatus && (
                       <div className={styles.subscriptionDetails}>
                         <p>Statut: <span className={styles.status}>{subscriptionStatus.status}</span></p>
                         <p>Fin de période: <span className={styles.date}>
                           {new Date(subscriptionStatus.currentPeriodEnd).toLocaleDateString('fr-FR')}
                         </span></p>
-                        {subscriptionStatus.cancelAtPeriodEnd && (
-                          <p className={styles.warning}>
-                            ⚠️ Votre abonnement sera annulé à la fin de la période
-                          </p>
-                        )}
-                      </div>
-                    )}
+                          <button 
+                            onClick={openUnsubscribeModal} 
+                            className={styles.unsubscribeButton} 
+                            disabled={isUnsubscribing}
+                          >
+                            {isUnsubscribing ? 'Annulation...' : 'Se désabonner'}
+                          </button>                        
+                      </div>                   
                   </div>
                 </div>
-                
-                {!subscriptionStatus?.cancelAtPeriodEnd && (
-                  <button
-                    onClick={handleUnsubscribe}
-                    disabled={isUnsubscribing}
-                    className={styles.unsubscribeButton}
-                  >
-                    <FontAwesomeIcon icon={faTimesCircle} />
-                    {isUnsubscribing ? 'Annulation...' : 'Se désabonner'}
-                  </button>
-                )}
               </div>
             ) : (
               <div className={styles.subscriptionInactive}>
@@ -379,8 +376,8 @@ export default function ProfilePage() {
           <div className={styles.successMessage}>{successMessage}</div>
         )}
 
-        {errorMessage && (
-          <div className={styles.errorMessage}>{errorMessage}</div>
+        {error && (
+          <div className={styles.errorMessage}>{error}</div>
         )}
 
         <form onSubmit={handleSubmit} className={styles.form}>
@@ -489,6 +486,16 @@ export default function ProfilePage() {
           </button>
         </form>
       </div>
+
+      <ConfirmModal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={handleUnsubscribe}
+        title="Confirmation d'annulation"
+      >
+        <p>Êtes-vous sûr de vouloir vous désabonner ?</p>
+        <p>Vous perdrez l&apos;accès aux fonctionnalités premium à la fin de votre période de facturation en cours.</p>
+      </ConfirmModal>
     </div>
   );
 } 

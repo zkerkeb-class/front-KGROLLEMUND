@@ -342,22 +342,22 @@ export default function QuoteForm({ user }) {
       console.log('🚀 Frontend: Sauvegarde + PDF du devis édité');
       console.log('Données:', quoteData);
       
-      const quoteResponse = await iaAPI.post('/quote', quoteData);
-      const createdQuote = quoteResponse.data;
+      const response = await iaAPI.post('/quote', quoteData);
+      const createdQuote = response.data;
       
       console.log('✅ Devis créé - ID:', createdQuote.id);
       
       // Télécharger le PDF immédiatement
-      const response = await iaAPI.get(`/quotes/pdf/${createdQuote.id}`, {
+      const pdfResponse = await iaAPI.get(`/quotes/pdf/${createdQuote.id}`, {
         responseType: 'blob'
       });
       
       // Détecter le type de contenu
-      const contentType = response.headers['content-type'];
+      const contentType = pdfResponse.headers['content-type'];
       
       if (contentType.includes('text/html')) {
         // Si c'est du HTML, ouvrir dans un nouvel onglet pour impression
-        const blob = new Blob([response.data], { type: 'text/html' });
+        const blob = new Blob([pdfResponse.data], { type: 'text/html' });
         const url = window.URL.createObjectURL(blob);
         const newWindow = window.open(url, '_blank');
         if (newWindow) {
@@ -368,7 +368,7 @@ export default function QuoteForm({ user }) {
         alert('Le devis s\'ouvre dans un nouvel onglet. Vous pouvez l\'imprimer en PDF depuis votre navigateur (Ctrl+P).');
       } else {
         // Créer un lien de téléchargement PDF
-        const blob = new Blob([response.data], { type: 'application/pdf' });
+        const blob = new Blob([pdfResponse.data], { type: 'application/pdf' });
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
@@ -531,25 +531,24 @@ export default function QuoteForm({ user }) {
       };
       
       console.log('🚀 Frontend: Envoi vers service IA');
-      console.log('URL:', 'http://localhost:3005/api/quote');
       console.log('Données:', quoteData);
       
-      const quoteResponse = await iaAPI.post('/quote', quoteData);
-      const createdQuote = quoteResponse.data;
+      const response = await iaAPI.post('/quote', quoteData);
+      const createdQuote = response.data;
       
       console.log('✅ Devis créé - ID:', createdQuote.id);
       
       // Télécharger le PDF immédiatement
-      const response = await iaAPI.get(`/quotes/pdf/${createdQuote.id}`, {
+      const pdfResponse = await iaAPI.get(`/quotes/pdf/${createdQuote.id}`, {
         responseType: 'blob'
       });
       
       // Détecter le type de contenu
-      const contentType = response.headers['content-type'];
+      const contentType = pdfResponse.headers['content-type'];
       
       if (contentType.includes('text/html')) {
         // Si c'est du HTML, ouvrir dans un nouvel onglet pour impression
-        const blob = new Blob([response.data], { type: 'text/html' });
+        const blob = new Blob([pdfResponse.data], { type: 'text/html' });
         const url = window.URL.createObjectURL(blob);
         const newWindow = window.open(url, '_blank');
         if (newWindow) {
@@ -560,7 +559,7 @@ export default function QuoteForm({ user }) {
         alert('Le devis s\'ouvre dans un nouvel onglet. Vous pouvez l\'imprimer en PDF depuis votre navigateur (Ctrl+P).');
       } else {
         // Créer un lien de téléchargement PDF
-        const blob = new Blob([response.data], { type: 'application/pdf' });
+        const blob = new Blob([pdfResponse.data], { type: 'application/pdf' });
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;

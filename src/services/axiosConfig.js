@@ -2,72 +2,46 @@ import axios from 'axios';
 
 // Création d'instances axios pour chaque service
 export const authAPI = axios.create({
-  baseURL: 'http://localhost:3001/api',
-  headers: {
-    'Content-Type': 'application/json'
-  }
+  baseURL: `${process.env.NEXT_PUBLIC_AUTH_API_URL}/api/auth`,
+  headers: { 'Content-Type': 'application/json' },
 });
 
 export const iaAPI = axios.create({
-  baseURL: 'http://localhost:3005/api',
-  headers: {
-    'Content-Type': 'application/json'
-  }
+  baseURL: `${process.env.NEXT_PUBLIC_IA_API_URL}`,
+  headers: { 'Content-Type': 'application/json' },
 });
 
 export const notificationAPI = axios.create({
-  baseURL: 'http://localhost:3003/notifications',
-  headers: {
-    'Content-Type': 'application/json'
-  }
+  baseURL: process.env.NEXT_PUBLIC_NOTIFICATION_API_URL,
+  headers: { 'Content-Type': 'application/json' },
 });
 
 export const dbAPI = axios.create({
-  baseURL: 'http://localhost:3004',
-  headers: {
-    'Content-Type': 'application/json'
-  }
+  baseURL: `${process.env.NEXT_PUBLIC_DB_API_URL}/api`,
 });
 
 export const paymentAPI = axios.create({
-  baseURL: 'http://localhost:3002/api/payments',
-  headers: {
-    'Content-Type': 'application/json'
-  }
+  baseURL: process.env.NEXT_PUBLIC_PAYMENT_API_URL,
 });
 
-// Fonction pour récupérer un cookie par son nom
-const getCookie = (name) => {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(';').shift();
-  return null;
-};
+// Intercepteur pour ajouter le token aux requêtes
+const addAuthTokenInterceptor = (config) => {
+  if (typeof window !== 'undefined') {
+    // La méthode via les cookies est la plus fiable suite à nos corrections
+    const token = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('token='))
+      ?.split('=')[1];
 
-// Intercepteur pour ajouter le token d'authentification
-const addAuthToken = (config) => {
-  // Essayer d'abord de récupérer le token depuis localStorage
-  let token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-  
-  // Si pas de token dans localStorage, essayer dans les cookies
-  if (!token && typeof document !== 'undefined') {
-    token = getCookie('token');
-  }
-  
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
   }
   return config;
 };
 
-// Intercepteur pour gérer les erreurs
-const handleError = (error) => {
-  console.error('Axios error:', error);
-  return Promise.reject(error);
-};
-
-// Appliquer les intercepteurs à toutes les instances
-[authAPI, iaAPI, notificationAPI, dbAPI, paymentAPI].forEach(instance => {
-  instance.interceptors.request.use(addAuthToken);
-  instance.interceptors.response.use(response => response, handleError);
-}); 
+// Appliquer l'intercepteur à toutes les instances d'API
+const apis = [authAPI, iaAPI, notificationAPI, dbAPI, paymentAPI];
+apis.forEach(api => {
+  api.interceptors.request.use(addAuthTokenInterceptor);
+});

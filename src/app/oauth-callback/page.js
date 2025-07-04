@@ -2,78 +2,57 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Cookies from 'js-cookie';
 import styles from './oauth-callback.module.css';
 import { getUser } from '@/services/authService';
 
 export default function OAuthCallback() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
   
   useEffect(() => {
     const token = searchParams.get('token');
-    const userData = searchParams.get('userData');
-    
-    if (token) {
+
+    if (!token) {
+      setError("Le token d'authentification est manquant. Redirection vers la page de connexion...");
+      setTimeout(() => {
+        router.push('/login');
+      }, 3000);
+      return;
+    }
+
+    // Le token est présent, on le sauvegarde et on récupère les données utilisateur
+    Cookies.set('token', token, { expires: 1, path: '/', sameSite: 'lax' });
+
+    const handleAuthentication = async () => {
       try {
-        // Stocker le token
-        localStorage.setItem('token', token);
-        
-        // Stocker les données utilisateur si disponibles
-        if (userData) {
-          const user = JSON.parse(decodeURIComponent(userData));
-          localStorage.setItem('user', JSON.stringify(user));
-          
-          // Définir un cookie pour indiquer si le profil est complété
-          document.cookie = `isProfileCompleted=${user.isProfileCompleted ? 'true' : 'false'}; path=/; max-age=86400`;
-          
-          // Si le profil n'est pas complété, rediriger vers la page de complétion
-          if (!user.isProfileCompleted) {
+        const user = await getUser();
+        if (user) {
+          // Sauvegarder l'état de complétion du profil dans un cookie pour le middleware
+          Cookies.set('isProfileCompleted', user.isProfileCompleted ? 'true' : 'false', { expires: 1, path: '/' });
+
+          // Rediriger vers la page appropriée
+          if (user.isProfileCompleted) {
+            router.push('/'); // Ou '/dashboard'
+          } else {
             router.push('/complete-profile');
-            return;
           }
         } else {
-          // Si les données utilisateur ne sont pas disponibles, récupérer les informations utilisateur
-          fetchUserData(token);
+          throw new Error('Les données utilisateur n\'ont pas pu être récupérées.');
         }
-        
-        // Rediriger vers la page d'accueil
-        router.push('/');
-      } catch (error) {
-        console.error('Erreur lors du traitement des données OAuth:', error);
-        setError("Une erreur est survenue lors de l'authentification");
-        
-        // En cas d'erreur, rediriger vers la page de connexion après 3 secondes
+      } catch (e) {
+        console.error('Erreur lors de la récupération des données utilisateur après le callback OAuth:', e);
+        setError('Une erreur est survenue lors de la finalisation de votre connexion. Veuillez réessayer.');
         setTimeout(() => {
           router.push('/login');
         }, 3000);
       }
-    } else {
-      // En cas d'erreur, rediriger vers la page de connexion
-      router.push('/login');
-    }
+    };
+
+    handleAuthentication();
+
   }, [router, searchParams]);
-  
-  // Fonction pour récupérer les données utilisateur avec le service authService
-  const fetchUserData = async (token) => {
-    try {
-      const user = await getUser();
-      
-      if (user) {
-        localStorage.setItem('user', JSON.stringify(user));
-        
-        // Définir un cookie pour indiquer si le profil est complété
-        document.cookie = `isProfileCompleted=${user.isProfileCompleted ? 'true' : 'false'}; path=/; max-age=86400`;
-        
-        // Si le profil n'est pas complété, rediriger vers la page de complétion
-        if (!user.isProfileCompleted) {
-          router.push('/complete-profile');
-        }
-      }
-    } catch (error) {
-      console.error('Erreur lors de la récupération des données utilisateur:', error);
-    }
-  };
   
   return (
     <div className={styles.container}>
@@ -82,7 +61,7 @@ export default function OAuthCallback() {
       ) : (
         <>
           <div className={styles.loader}></div>
-          <p>Authentification en cours...</p>
+          <p>Finalisation de l&apos;authentification...</p>
         </>
       )}
     </div>

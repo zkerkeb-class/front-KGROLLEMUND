@@ -7,7 +7,8 @@ const publicPaths = [
   '/verify-email',
   '/reset-password',
   '/api/auth',
-  '/api/profile/complete'
+  '/api/profile/complete',
+  '/api/metrics'
 ];
 
 // Liste des chemins qui ne nécessitent pas de vérification de profil

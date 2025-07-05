@@ -1,14 +1,36 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { getUser } from '@/services/authService';
 import styles from './metrics.module.css';
+import Navbar from '@/components/Navbar';
 
 export default function MetricsDashboard() {
+  const router = useRouter();
+  const [user, setUser] = useState(null);
   const [metrics, setMetrics] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    const checkAuthAndFetchMetrics = async () => {
+      try {
+        const userData = await getUser();
+        if (userData) {
+          setUser(userData);
+          setAuthLoading(false);
+          await fetchMetrics();
+        } else {
+          router.push('/login');
+        }
+      } catch (err) {
+        console.error('Erreur d\'authentification:', err);
+        router.push('/login');
+      }
+    };
+
     const fetchMetrics = async () => {
       try {
         setLoading(true);
@@ -20,19 +42,19 @@ export default function MetricsDashboard() {
         
         const text = await response.text();
         setMetrics(parsePrometheusMetrics(text));
-        setLoading(false);
       } catch (error) {
         console.error("Erreur de fetch:", error);
         setError(`Impossible de charger les métriques. L'endpoint est-il correct ?`);
+      } finally {
         setLoading(false);
       }
     };
 
-    fetchMetrics();
-    const interval = setInterval(fetchMetrics, 30000); // Rafraîchir toutes les 30 secondes
-    
+    checkAuthAndFetchMetrics();
+    const interval = setInterval(fetchMetrics, 30000);
+
     return () => clearInterval(interval);
-  }, []);
+  }, [router]);
 
   // Fonction pour parser les métriques Prometheus
   const parsePrometheusMetrics = (rawData) => {
@@ -105,29 +127,18 @@ export default function MetricsDashboard() {
 
   const categories = groupMetricsByCategory();
 
-  if (loading) {
+  if (authLoading) {
     return (
       <div className={styles.container}>
-        <h1>Tableau de bord des métriques</h1>
-        <div className={styles.loading}>Chargement des métriques...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className={styles.container}>
-        <h1>Tableau de bord des métriques</h1>
-        <div className={styles.error}>
-          <p>Erreur lors du chargement des métriques:</p>
-          <p>{error}</p>
-          <p>Assurez-vous que le service de métriques est en cours d'exécution.</p>
-        </div>
+        <div className={styles.loading}>Vérification de l'authentification...</div>
       </div>
     );
   }
 
   return (
+    <>
+    <Navbar user={user} />
+
     <div className={styles.container}>
       <h1>Métriques de l&apos;application</h1>
       
@@ -136,6 +147,15 @@ export default function MetricsDashboard() {
         <p>Dernière mise à jour: {new Date().toLocaleTimeString()}</p>
       </div>
       
+      {loading && <div className={styles.loading}>Rafraîchissement des métriques...</div>}
+      
+      {error && (
+        <div className={styles.error}>
+          <p>Erreur lors du chargement des métriques:</p>
+          <p>{error}</p>
+        </div>
+      )}
+
       {Object.keys(categories).map(category => (
         <div key={category} className={styles.category}>
           <h2>{category.charAt(0).toUpperCase() + category.slice(1)}</h2>
@@ -162,5 +182,6 @@ export default function MetricsDashboard() {
         </a>
       </div>
     </div>
+    </>
   );
 } 

@@ -6,6 +6,7 @@ import styles from './complete-profile.module.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { completeProfile } from '@/services/profileService';
+import { getUser } from '@/services/authService';
 import { sectors, specialtiesBySector } from '@/constants/specialties';
 
 export default function CompleteProfile() {
@@ -27,24 +28,22 @@ export default function CompleteProfile() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const userData = localStorage.getItem('user');
+        const userData = await getUser(); // Utilise le service pour récupérer l'utilisateur
         
-        if (!token || !userData) {
+        if (!userData) {
           router.push('/login');
           return;
         }
         
-        const parsedUser = JSON.parse(userData);
-        setUser(parsedUser);
+        setUser(userData);
         
         // Si le profil est déjà complété, rediriger vers la page d'accueil
-        if (parsedUser.isProfileCompleted) {
+        if (userData.isProfileCompleted) {
           router.push('/');
           return;
         }
       } catch (error) {
-        console.error('Erreur lors de la vérification de l\'authentification:', error);
+        console.error('Erreur lors de la récupération de l\'utilisateur:', error);
         router.push('/login');
       }
     };
@@ -197,11 +196,6 @@ export default function CompleteProfile() {
         yearsOfExperience: parseInt(formData.yearsOfExperience)
       });
       
-      // Mettre à jour les informations utilisateur dans le localStorage
-      const userData = JSON.parse(localStorage.getItem('user'));
-      userData.isProfileCompleted = true;
-      userData.sector = formData.sector;
-      localStorage.setItem('user', JSON.stringify(userData));
       
       // Récupérer le token actuel (depuis localStorage ou cookie)
       const getTokenFromCookie = () => {

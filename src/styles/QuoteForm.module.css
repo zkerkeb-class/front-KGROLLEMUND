@@ -1275,3 +1275,46 @@
   background-color: #fff3e0;
   color: #ff9800;
 }
+
+.editBtn:hover,
+.closeBtn:hover {
+  opacity: 0.9;
+}
+
+.primaryButton,
+.secondaryButton {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.primaryButton {
+  background-color: #3182ce;
+  color: white;
+}
+
+.primaryButton:hover {
+  background-color: #2b6cb0;
+}
+
+.primaryButton:disabled {
+  background-color: #a0aec0;
+  cursor: not-allowed;
+}
+
+.secondaryButton {
+  background-color: #e2e8f0;
+  color: #2d3748;
+}
+
+.secondaryButton:hover {
+  background-color: #cbd5e0;
+}
+
+.hidden {
+  display: none;
+}

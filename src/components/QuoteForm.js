@@ -28,6 +28,7 @@ export default function QuoteForm({ user }) {
   const [showPreviewPopup, setShowPreviewPopup] = useState(false);
   const [showPreviewButton, setShowPreviewButton] = useState(false);
   const [showEditPopup, setShowEditPopup] = useState(false);
+  const [createdQuote, setCreatedQuote] = useState(null);
   
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -70,10 +71,18 @@ export default function QuoteForm({ user }) {
       totalMinCost += costRange.min;
       totalMaxCost += costRange.max;
     });
+
+    const hoursDisplay = totalMinHours === totalMaxHours 
+      ? `${Math.round(totalMaxHours)}h` 
+      : `${Math.round(totalMinHours)}-${Math.round(totalMaxHours)}h`;
+      
+    const costDisplay = totalMinCost === totalMaxCost
+      ? `${Math.round(totalMaxCost)}€`
+      : `${Math.round(totalMinCost)}-${Math.round(totalMaxCost)}€`;
     
     return {
-      hours: `${Math.round(totalMinHours)}-${Math.round(totalMaxHours)}h`,
-      cost: `${Math.round(totalMinCost)}-${Math.round(totalMaxCost)}€`
+      hours: hoursDisplay,
+      cost: costDisplay
     };
   };
 
@@ -306,88 +315,78 @@ export default function QuoteForm({ user }) {
     }
   };
 
-  // Nouvelle fonction pour sauvegarder ET télécharger le PDF
   const handleSaveAndDownloadPdf = async () => {
-    // Validation des champs obligatoires
-    if (!clientEmail || !clientName) {
-      alert('Veuillez remplir le nom et l\'email du client avant de télécharger le PDF.');
-      return;
-    }
-    
-    // Vérification des données d'analyse
-    if (!aiAnalysis || !quoteRequestId) {
-      alert('Erreur : données d\'analyse manquantes. Veuillez relancer l\'analyse.');
+    setLoading(true);
+    if (!quoteRequestId) {
+      alert('Erreur: Aucune demande de devis à associer au devis final.');
+      setLoading(false);
       return;
     }
 
-    setLoading(true);
-    
     try {
-      // Calculer les totaux à partir des tâches éditées (gestion des fourchettes)
-      const totalHours = editedTasks.reduce((sum, task) => sum + extractRangeValues(task.estimatedHours).min, 0);
-      const totalCost = editedTasks.reduce((sum, task) => sum + extractRangeValues(task.estimatedCost).min, 0);
+      const finalTotals = calculateTotals(editedTasks);
       
-      // Créer le devis final en base de données avec les données éditées
-      const quoteData = {
-        quoteRequestId,
-        clientEmail,
-        clientName,
+      // Fonction robuste pour extraire la valeur numérique maximale d'une chaîne (ex: "100-150h" ou "150h")
+      const getMaxValueFromString = (valueString) => {
+        if (!valueString) return 0;
+        const cleanedString = String(valueString).replace(/[€h\s]/g, '');
+        const parts = cleanedString.split('-');
+        return parseFloat(parts[parts.length - 1]) || 0;
+      };
+
+      const finalQuoteData = {
+        quoteRequestId: quoteRequestId,
+        clientEmail: clientEmail,
+        clientName: clientName,
         updatedTasks: editedTasks,
-        totalEstimate: totalCost,
-        timeEstimate: totalHours,
-        projectTitle: title || 'Projet',
-        projectDescription: description || 'Description du projet'
+        totalEstimate: getMaxValueFromString(finalTotals.cost),
+        timeEstimate: getMaxValueFromString(finalTotals.hours)
       };
       
-      console.log('🚀 Frontend: Sauvegarde + PDF du devis édité');
-      console.log('Données:', quoteData);
+      const response = await dbAPI.post('/quotes', finalQuoteData);
+      const newQuote = response.data;
       
-      const response = await iaAPI.post('/quote', quoteData);
-      const createdQuote = response.data;
-      
-      console.log('✅ Devis créé - ID:', createdQuote.id);
-      
-      // Télécharger le PDF immédiatement
-      const pdfResponse = await iaAPI.get(`/quotes/pdf/${createdQuote.id}`, {
-        responseType: 'blob'
+      setCreatedQuote(newQuote);
+
+      const pdfResponse = await iaAPI.get(`/quotes/pdf/${newQuote.id}`, {
+        responseType: 'blob',
       });
-      
-      // Détecter le type de contenu
-      const contentType = pdfResponse.headers['content-type'];
-      
-      if (contentType.includes('text/html')) {
-        // Si c'est du HTML, ouvrir dans un nouvel onglet pour impression
-        const blob = new Blob([pdfResponse.data], { type: 'text/html' });
-        const url = window.URL.createObjectURL(blob);
-        const newWindow = window.open(url, '_blank');
-        if (newWindow) {
-          newWindow.focus();
-        }
-        window.URL.revokeObjectURL(url);
-        
-        alert('Le devis s\'ouvre dans un nouvel onglet. Vous pouvez l\'imprimer en PDF depuis votre navigateur (Ctrl+P).');
-      } else {
-        // Créer un lien de téléchargement PDF
-        const blob = new Blob([pdfResponse.data], { type: 'application/pdf' });
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `devis-${title.replace(/[^a-zA-Z0-9]/g, '-')}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-      }
-      
-      // Fermer la popup et mettre à jour l'état
-      setShowEditPopup(false);
-      setShowPreviewButton(true);
-      setQuoteResponse(createdQuote);
-      setPreviewMode(false);
+
+      const url = window.URL.createObjectURL(new Blob([pdfResponse.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `devis-${newQuote.id}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
       
     } catch (error) {
-      console.error('Erreur lors de la sauvegarde et génération du PDF:', error);
-      alert('Une erreur est survenue lors de la sauvegarde et génération du PDF');
+      console.error('Erreur lors de la sauvegarde et du téléchargement du PDF:', error);
+      alert('Une erreur est survenue lors de la finalisation du devis.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRedownloadPdf = async () => {
+    if (!createdQuote) return;
+    setLoading(true);
+    try {
+      const pdfResponse = await iaAPI.get(`/quotes/pdf/${createdQuote.id}`, {
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([pdfResponse.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `devis-${createdQuote.id}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Erreur lors du re-téléchargement du PDF:', error);
+      alert('Une erreur est survenue lors du téléchargement du PDF.');
     } finally {
       setLoading(false);
     }
@@ -493,138 +492,6 @@ export default function QuoteForm({ user }) {
   const handleCancelPreview = () => {
     setPreviewMode(false);
     setShowPreviewButton(true);
-  };
-
-  // Fonction pour télécharger le devis en PDF directement depuis la pop-up
-  const handleDirectPdfDownload = async () => {
-    // Validation des champs obligatoires
-    if (!clientEmail || !clientName) {
-      alert('Veuillez remplir le nom et l\'email du client avant de télécharger le PDF.');
-      return;
-    }
-    
-    // Vérification des données d'analyse
-    if (!aiAnalysis || !quoteRequestId) {
-      alert('Erreur : données d\'analyse manquantes. Veuillez relancer l\'analyse.');
-      return;
-    }
-
-    setLoading(true);
-    
-    try {
-      // Utiliser les tâches d'analyse ou éditées
-      const tasksToUse = editedTasks.length > 0 ? editedTasks : aiAnalysis.tasksBreakdown || [];
-      
-      // Calculer les totaux avec notre fonction
-      const totals = calculateTotals(tasksToUse);
-      
-      // Créer le devis final en base de données
-      const quoteData = {
-        quoteRequestId,
-        clientEmail,
-        clientName,
-        updatedTasks: tasksToUse,
-        totalEstimate: totals.cost,
-        timeEstimate: totals.hours,
-        projectTitle: title || 'Projet',
-        projectDescription: description || 'Description du projet'
-      };
-      
-      console.log('🚀 Frontend: Envoi vers service IA');
-      console.log('Données:', quoteData);
-      
-      const response = await iaAPI.post('/quote', quoteData);
-      const createdQuote = response.data;
-      
-      console.log('✅ Devis créé - ID:', createdQuote.id);
-      
-      // Télécharger le PDF immédiatement
-      const pdfResponse = await iaAPI.get(`/quotes/pdf/${createdQuote.id}`, {
-        responseType: 'blob'
-      });
-      
-      // Détecter le type de contenu
-      const contentType = pdfResponse.headers['content-type'];
-      
-      if (contentType.includes('text/html')) {
-        // Si c'est du HTML, ouvrir dans un nouvel onglet pour impression
-        const blob = new Blob([pdfResponse.data], { type: 'text/html' });
-        const url = window.URL.createObjectURL(blob);
-        const newWindow = window.open(url, '_blank');
-        if (newWindow) {
-          newWindow.focus();
-        }
-        window.URL.revokeObjectURL(url);
-        
-        alert('Le devis s\'ouvre dans un nouvel onglet. Vous pouvez l\'imprimer en PDF depuis votre navigateur (Ctrl+P).');
-      } else {
-        // Créer un lien de téléchargement PDF
-        const blob = new Blob([pdfResponse.data], { type: 'application/pdf' });
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `devis-${title.replace(/[^a-zA-Z0-9]/g, '-')}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-      }
-      
-      setShowPreviewPopup(false);
-      setShowPreviewButton(true);
-      
-      // Définir quoteResponse pour permettre le re-téléchargement
-      setQuoteResponse(createdQuote);
-      
-    } catch (error) {
-      console.error('Erreur lors de la génération du PDF:', error);
-      alert('Une erreur est survenue lors de la génération du PDF');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Fonction pour télécharger le devis en PDF
-  const downloadQuoteAsPdf = async () => {
-    if (!quoteResponse || !quoteResponse.id) return;
-    
-    try {
-      // Appeler l'API pour générer le PDF avec l'ID du devis
-      const response = await iaAPI.get(`/quotes/pdf/${quoteResponse.id}`, {
-        responseType: 'blob'
-      });
-      
-      // Détecter le type de contenu
-      const contentType = response.headers['content-type'];
-      
-      if (contentType.includes('text/html')) {
-        // Si c'est du HTML, ouvrir dans un nouvel onglet pour impression
-        const blob = new Blob([response.data], { type: 'text/html' });
-        const url = window.URL.createObjectURL(blob);
-        const newWindow = window.open(url, '_blank');
-        if (newWindow) {
-          newWindow.focus();
-        }
-        window.URL.revokeObjectURL(url);
-        
-        alert('Le devis s\'ouvre dans un nouvel onglet. Vous pouvez l\'imprimer en PDF depuis votre navigateur (Ctrl+P).');
-      } else {
-        // Créer un lien de téléchargement PDF
-        const blob = new Blob([response.data], { type: 'application/pdf' });
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `devis-${title.replace(/[^a-zA-Z0-9]/g, '-')}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-      }
-      
-    } catch (error) {
-      console.error('Erreur lors du téléchargement du PDF:', error);
-      alert('Une erreur est survenue lors de la génération du PDF');
-    }
   };
 
   // Fonction pour rediriger vers la page profil
@@ -1078,44 +945,32 @@ export default function QuoteForm({ user }) {
               )}
             </div>
             <div className={styles.popupActions + ' ' + styles.previewActions}>
-              <button
-                onClick={handleDirectPdfDownload}
-                disabled={loading || !clientEmail || !clientName}
-                className={styles.downloadBtn}
-                title={(!clientEmail || !clientName) ? "Veuillez remplir les informations client" : ""}
+              <button onClick={handleClosePreviewPopup} className={styles.secondaryButton}>Fermer</button>
+              <button onClick={handleEditQuote} className={styles.secondaryButton}>Modifier</button>
+              <button 
+                onClick={createdQuote ? handleRedownloadPdf : handleSaveAndDownloadPdf} 
+                className={styles.primaryButton} 
+                disabled={loading}
               >
-                {loading ? 'Génération...' : '📄 Télécharger PDF'}
-              </button>
-              <button
-                onClick={handleEditQuote}
-                className={styles.editBtn}
-              >
-                ✏️ Éditer le devis
-              </button>
-              <button
-                onClick={handleClosePreviewPopup}
-                className={styles.closeBtn}
-              >
-                Fermer
+                {loading ? 'Chargement...' : (createdQuote ? 'Télécharger à nouveau' : 'Finaliser et Télécharger')}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Bouton persistant de prévisualisation */}
-      {showPreviewButton && (
+      {showPreviewButton && !showPreviewPopup && (
         <div className={styles.floatingButton}>
           <button
             onClick={handleOpenPreview}
             className={styles.floatingPreviewBtn}
             title="Prévisualiser les résultats d'analyse"
           >
-            📊 Prévisualiser l&apos;analyse
+            📊 Prévisualiser le devis
           </button>
-            </div>
-          )}
-          
+        </div>
+      )}
+      
       {/* Pop-up d'édition du devis */}
       {showEditPopup && (
         <div className={styles.popupOverlay}>

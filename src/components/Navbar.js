@@ -24,9 +24,9 @@ export default function Navbar({ user }) {
             </span>
             <span className={styles.userName}>{user.name}</span>
             <span className={styles.userEmail}>{user.email}</span>
-            {user.isSubscribed && (
+            {/* {user.isSubscribed && (
               <span className={styles.badge}>Abonné</span>
-            )}
+            )} */}
           </>
         )}
       </div>
@@ -44,12 +44,12 @@ export default function Navbar({ user }) {
           <FontAwesomeIcon icon={faUserCog} className={styles.navIcon} />
           <span>Profil</span>
         </Link>
-        {user?.isAdmin && (
+        {/* {user?.isAdmin && (
           <Link href="/backoffice">
             <FontAwesomeIcon icon={faLock} className={styles.navIcon} />
             <span>Administration</span>
           </Link>
-        )}
+        )} */}
         {user?.isAdmin && (
           <Link href="/metrics" className={styles.navLink}>
             Métriques

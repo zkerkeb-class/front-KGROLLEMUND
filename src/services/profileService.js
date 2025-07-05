@@ -1,15 +1,14 @@
-import { dbAPI, authAPI } from './axiosConfig';
+import { dbAPI } from './axiosConfig';
+import { getUser } from './authService';
 
 // Service pour gérer les profils professionnels
 export const completeProfile = async (profileData) => {
   try {
-    // Récupérer les informations de l'utilisateur depuis le localStorage
-    const userString = localStorage.getItem('user');
-    if (!userString) {
+    // Récupérer les informations de l'utilisateur via le service d'authentification
+    const user = await getUser();
+    if (!user) {
       throw new Error('Utilisateur non connecté');
     }
-    
-    const user = JSON.parse(userString);
     
     // Mettre à jour le secteur d'activité et marquer le profil comme complété
     await dbAPI.put(`/users/${user.id}`, {
@@ -49,19 +48,11 @@ export const completeProfile = async (profileData) => {
 // Récupérer le profil professionnel de l'utilisateur connecté
 export const getUserProfile = async () => {
   try {
-    // Récupérer les informations de l'utilisateur depuis le localStorage
-    const userString = localStorage.getItem('user');
-    if (!userString) {
-      console.error('Erreur: Aucune donnée utilisateur dans localStorage');
+    // Récupérer les informations de l'utilisateur via le service d'authentification
+    const user = await getUser();
+    if (!user) {
+      console.error('Erreur: Aucune donnée utilisateur récupérée');
       throw new Error('Utilisateur non connecté');
-    }
-    
-    let user;
-    try {
-      user = JSON.parse(userString);
-    } catch (parseError) {
-      console.error('Erreur lors du parsing des données utilisateur:', parseError);
-      throw new Error('Format de données utilisateur invalide');
     }
     
     if (!user.id) {
@@ -96,13 +87,11 @@ export const getUserProfile = async () => {
 // Mettre à jour le profil professionnel
 export const updateProfile = async (profileData) => {
   try {
-    // Récupérer les informations de l'utilisateur depuis le localStorage
-    const userString = localStorage.getItem('user');
-    if (!userString) {
+    // Récupérer les informations de l'utilisateur via le service d'authentification
+    const user = await getUser();
+    if (!user) {
       throw new Error('Utilisateur non connecté');
     }
-    
-    const user = JSON.parse(userString);
     
     // Mettre à jour le profil
     const response = await dbAPI.put(`/professional-profiles/${user.id}`, profileData);

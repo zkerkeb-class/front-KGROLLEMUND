@@ -2,183 +2,159 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { authService } from '@/utils/api';
-import Navbar from '@/components/Navbar';
 import styles from './page.module.css';
+import { getUser } from '@/services/authService';
+import { getQuotesForUser, downloadQuotePDF, getQuoteStats } from '@/services/quoteService';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { 
+  faSpinner, 
+  faFileDownload, 
+  faCircleNotch,
+  faFileInvoice,
+  faEuroSign,
+  faChartLine 
+} from '@fortawesome/free-solid-svg-icons';
+import Navbar from '@/components/Navbar';
 
 export default function Home() {
   const router = useRouter();
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [debug, setDebug] = useState(null);
+  const [quotes, setQuotes] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [downloadingId, setDownloadingId] = useState(null);
 
   useEffect(() => {
-    const checkAuth = async () => {
+    const fetchData = async () => {
       try {
-        // Vérifier d'abord le token dans localStorage
-        let token = localStorage.getItem('token');
-        
-        // Si pas de token dans localStorage, vérifier dans les cookies
-        if (!token) {
-          const cookies = document.cookie.split(';');
-          const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('token='));
-          if (tokenCookie) {
-            token = tokenCookie.split('=')[1];
-            // Si trouvé dans cookie mais pas dans localStorage, le stocker dans localStorage
-            localStorage.setItem('token', token);
-            console.log('Token trouvé dans cookie et copié dans localStorage');
-          }
-        }
-        
-        if (!token) {
-          console.log('Pas de token trouvé, redirection vers login');
+        const userData = await getUser();
+        if (userData) {
+          setUser(userData);
+          const [userQuotes, userStats] = await Promise.all([
+            getQuotesForUser(),
+            getQuoteStats()
+          ]);
+          setQuotes(userQuotes);
+          setStats(userStats);
+        } else {
           router.push('/login');
-          return;
         }
-
-        console.log('Token trouvé, vérification...');
-        console.log('Token (début):', token.substring(0, 15) + '...');
-        
-        try {
-          const response = await authService.verify();
-          console.log('Réponse de vérification:', response.data);
-          
-          // Mettre à jour les informations utilisateur dans localStorage si nécessaire
-          if (response.data.user) {
-            localStorage.setItem('user', JSON.stringify(response.data.user));
-            
-            // Mettre à jour le cookie isProfileCompleted
-            const isProfileCompleted = response.data.user.isProfileCompleted;
-            document.cookie = `isProfileCompleted=${isProfileCompleted ? 'true' : 'false'}; path=/; max-age=86400`;
-            
-            setUser(response.data.user);
-            setError(null);
-          } else {
-            throw new Error('Utilisateur non trouvé dans la réponse');
-          }
-        } catch (initialError) {
-          console.error('Erreur de vérification initiale:', initialError);
-          
-          // Si l'endpoint /verify échoue, essayons l'endpoint de débogage
-          try {
-            console.log('Tentative de vérification avec l\'endpoint de débogage...');
-            const debugResponse = await authService.debugVerify();
-            console.log('Réponse de débogage:', debugResponse.data);
-            
-            if (debugResponse.data.message === 'Token valide') {
-              console.log('Token validé via debug, mais problème de connexion avec le service DB');
-              setError('Votre session est valide, mais il y a un problème de connexion avec la base de données.');
-            } else {
-              localStorage.removeItem('token');
-              router.push('/login');
-            }
-          } catch (debugError) {
-            console.error('Échec du débogage de vérification:', debugError);
-            throw initialError; // Relancer l'erreur initiale
-          }
-        }
-      } catch (error) {
-        console.error('Erreur d\'authentification:', error);
-        setError(error.message || 'Erreur d\'authentification');
-        
-        if (error.response) {
-          console.error('Status:', error.response.status);
-          console.error('Données:', error.response.data);
-          
-          // Journalisation détaillée de l'erreur
-          if (error.response.status === 404) {
-            console.error('Endpoint /verify non trouvé. Vérifiez la configuration du serveur.');
-          } else if (error.response.status === 403) {
-            console.error('Token invalide ou expiré.');
-          }
-        } else if (error.request) {
-          console.error('Pas de réponse reçue du serveur. Vérifiez que le serveur d\'authentification est en cours d\'exécution.');
-        }
-        
-        localStorage.removeItem('token');
-        router.push('/login');
+      } catch (err) {
+        setError('Impossible de charger les données. Veuillez vous reconnecter.');
+        console.error(err);
+        // Optionnel: rediriger vers le login après un délai
+        // setTimeout(() => router.push('/login'), 3000);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
-    checkAuth();
+    fetchData();
   }, [router]);
 
-  const handleGenerateQuote = () => {
-    router.push('/quote');
-  };
-
-  // Ajouter cette fonction pour diagnostiquer les routes
-  const handleCheckRoutes = async () => {
+  const handleDownload = async (quoteId) => {
+    if (downloadingId) return; // Empêche les téléchargements multiples
+    
+    setDownloadingId(quoteId);
     try {
-      setDebug("Vérification des routes disponibles...");
-      const response = await authService.listRoutes();
-      setDebug(JSON.stringify(response.data, null, 2));
-    } catch (error) {
-      setDebug(`Erreur: ${error.message}`);
-      if (error.response) {
-        setDebug(prev => `${prev}\nStatus: ${error.response.status}\nDonnées: ${JSON.stringify(error.response.data)}`);
-      }
-    }
-  };
-  
-  // Fonction pour tester la configuration du service d'authentification
-  const handleTestAuthService = async () => {
-    try {
-      setDebug(`Test de la configuration du service authentification...`);
-      const response = await authService.testAuthService();
-      setDebug(JSON.stringify(response.data, null, 2));
-    } catch (error) {
-      setDebug(`Erreur: ${error.message}`);
-      if (error.response) {
-        setDebug(prev => `${prev}\nStatus: ${error.response.status}\nDonnées: ${JSON.stringify(error.response.data)}`);
-      }
+      await downloadQuotePDF(quoteId);
+    } catch (err) {
+      setError(`Erreur lors du téléchargement du devis ${quoteId}.`);
+      console.error(err);
+    } finally {
+      setDownloadingId(null);
     }
   };
 
-  if (loading) {
-    return <div className={styles.loading}>Chargement...</div>;
-  }
-
-  if (error) {
+  if (isLoading) {
     return (
-      <div className={styles.container}>
-        <main className={styles.main}>
-          <h1>Erreur d&apos;authentification</h1>
-          <p>{error}</p>
-          <button onClick={() => router.push('/login')}>Retour à la connexion</button>
-          <button onClick={handleCheckRoutes}>Vérifier routes disponibles</button>
-          <button onClick={handleTestAuthService}>Tester la configuration du service d&apos;authentification</button>
-          {debug && (
-            <div className={styles.debug}>
-              <h3>Informations de débogage:</h3>
-              <pre>{debug}</pre>
-            </div>
-          )}
-        </main>
+      <div className={styles.loadingContainer}>
+        <FontAwesomeIcon icon={faSpinner} spin size="3x" />
+        <p>Chargement de votre tableau de bord...</p>
       </div>
     );
   }
-
+  
+  if (error) {
+    return <div className={styles.errorContainer}>{error}</div>;
+  }
+console.log("stats", stats);
   return (
-    <div className={styles.container}>
+    <>
       <Navbar user={user} />
-      
       <main className={styles.main}>
-        <h1>Bienvenue sur le générateur de devis IA</h1>
-        <p>Générez des devis précis pour vos projets de développement web</p>
-        
-        <div className={styles.actionContainer}>
-          <button 
-            className={styles.generateBtn}
-            onClick={handleGenerateQuote}
-          >
-            Générer un devis
+        <div className={styles.header}>
+          <h1 className={styles.title}>
+            Bienvenue, {user?.name || 'cher utilisateur'} !
+          </h1>
+          <strong className={styles.description}>
+            Prêt à créer votre prochain devis ?
+          </strong>
+          <button onClick={() => router.push('/quote')} className={styles.generateButton}>
+            Générer un nouveau devis
           </button>
         </div>
+        
+        {stats && (
+          <div className={styles.statsGrid}>
+            <div className={styles.statCard}>
+              <FontAwesomeIcon icon={faFileInvoice} className={styles.statIcon} />
+              <div className={styles.statValue}>{stats.totalQuotes}</div>
+              <div className={styles.statLabel}>Devis créés</div>
+            </div>
+            <div className={styles.statCard}>
+              <FontAwesomeIcon icon={faEuroSign} className={styles.statIcon} />
+              <div className={styles.statValue}>{stats.totalEarned.toLocaleString('fr-FR')} €</div>
+              <div className={styles.statLabel}>Total gagné</div>
+            </div>
+            <div className={styles.statCard}>
+              <FontAwesomeIcon icon={faChartLine} className={styles.statIcon} />
+              <div className={styles.statValue}>{stats.monthlyAverage.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} €</div>
+              <div className={styles.statLabel}>Moyenne mensuelle</div>
+            </div>
+          </div>
+        )}
+        
+        <div className={styles.content}>
+          <div className={styles.quoteList}>
+            <h2>Vos devis récents</h2>
+            {quotes.length > 0 ? (
+              <ul>
+                {quotes.slice(0, 5).map((quote) => {
+                  const date = new Date(quote.createdAt);
+                  const formattedDate = `${String(date.getDate()).padStart(2, '0')}-${String(date.getMonth() + 1).padStart(2, '0')}-${date.getFullYear()}`;
+                  
+                  return (
+                    <li key={quote.id} className={styles.quoteItem}>
+                      <span className={styles.quoteTitle}>{quote.title}</span>
+                      <span className={styles.quoteDate}>
+                        {formattedDate}
+                      </span>
+                      <span className={styles.quoteAction}>
+                        <button 
+                          onClick={() => handleDownload(quote.id)}
+                          className={styles.downloadButton}
+                          disabled={downloadingId === quote.id}
+                          title="Télécharger le PDF"
+                        >
+                          {downloadingId === quote.id ? (
+                            <FontAwesomeIcon icon={faCircleNotch} spin />
+                          ) : (
+                            <FontAwesomeIcon icon={faFileDownload} />
+                          )}
+                        </button>
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p>Vous n&apos;avez pas encore de devis.</p>
+            )}
+          </div>
+        </div>
       </main>
-    </div>
+    </>
   );
 }

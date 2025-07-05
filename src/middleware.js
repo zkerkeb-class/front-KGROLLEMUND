@@ -20,40 +20,38 @@ const noProfileCheckPaths = [
 export function middleware(request) {
   const { pathname } = request.nextUrl;
   
-  // Vérifier si le chemin est public
+  // Récupérer les cookies
+  const token = request.cookies.get('token')?.value;
+  const isProfileCompleted = request.cookies.get('isProfileCompleted')?.value === 'true';
+
+  // Chemins publics accessibles sans authentification
   const isPublicPath = publicPaths.some(path => pathname.startsWith(path));
-  
-  // Vérifier si le chemin est exempté de la vérification de profil
-  const isNoProfileCheckPath = noProfileCheckPaths.some(path => pathname.startsWith(path));
-  
-  // Si c'est un chemin public, ne pas vérifier l'authentification
+
+  // Si l'utilisateur est sur un chemin public, on le laisse passer
   if (isPublicPath) {
     return NextResponse.next();
   }
-  
-  // Récupérer le token d'authentification
-  const token = request.cookies.get('token')?.value;
-  
-  // Si l'utilisateur n'est pas authentifié, rediriger vers la page de connexion
+
+  // Si l'utilisateur n'a pas de token, on le redirige vers le login
   if (!token) {
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('from', pathname);
     return NextResponse.redirect(loginUrl);
   }
-  
-  // Si le chemin est exempté de la vérification de profil, ne pas vérifier
-  if (isNoProfileCheckPath) {
-    return NextResponse.next();
-  }
-  
-  // Vérifier si le profil est complété (via le localStorage côté client)
-  // Comme le middleware s'exécute côté serveur, nous utilisons un cookie pour cette information
-  const isProfileCompleted = request.cookies.get('isProfileCompleted')?.value === 'true';
-  
-  // Si le profil n'est pas complété, rediriger vers la page de complétion
+
+  // Si l'utilisateur est authentifié (a un token)
+  // et que son profil n'est pas complété...
   if (!isProfileCompleted) {
-    return NextResponse.redirect(new URL('/complete-profile', request.url));
+    // ... et qu'il n'est PAS déjà sur la page pour compléter son profil
+    // ou une API nécessaire, on le redirige.
+    if (!noProfileCheckPaths.some(path => pathname.startsWith(path))) {
+      return NextResponse.redirect(new URL('/complete-profile', request.url));
+    }
   }
+
+  // Si l'utilisateur est authentifié et que son profil est complété,
+  // mais qu'il essaie d'accéder à des pages restreintes, on le laisse passer.
+  // (ou rediriger vers le tableau de bord si nécessaire)
   
   return NextResponse.next();
 }

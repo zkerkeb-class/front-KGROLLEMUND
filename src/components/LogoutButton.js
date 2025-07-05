@@ -7,6 +7,7 @@ import { logout } from '@/services/authService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
 import { authAPI } from '@/services/axiosConfig';
+import styles from '../styles/LogoutButton.module.css';
 
 export default function LogoutButton({ className }) {
     const router = useRouter();
@@ -148,12 +149,10 @@ export default function LogoutButton({ className }) {
         <button
             onClick={handleLogout}
             disabled={isLoggingOut}
-            className={`px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors ${
-                isLoggingOut ? 'opacity-50 cursor-not-allowed' : ''
-            } ${className || ''}`}
+            className={`${styles.logoutButton} ${isLoggingOut ? styles.disabled : ''}`}
+            title="Déconnexion"
         >
-            <FontAwesomeIcon icon={faSignOutAlt} className="mr-2" />
-            {isLoggingOut ? 'Déconnexion...' : 'Déconnexion'}
+            <FontAwesomeIcon icon={faSignOutAlt} />
         </button>
     );
 } 

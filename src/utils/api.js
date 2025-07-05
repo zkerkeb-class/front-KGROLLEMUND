@@ -1,7 +1,6 @@
 import axios from 'axios';
 
 // URL des services
-console.log('process.env.NEXT_PUBLIC_AUTH_SERVICE_URL:', process.env.NEXT_PUBLIC_AUTH_SERVICE_URL);
 const AUTH_SERVICE_URL = process.env.NEXT_PUBLIC_AUTH_API_URL;
 const DB_SERVICE_URL = process.env.NEXT_PUBLIC_DB_API_URL;
 

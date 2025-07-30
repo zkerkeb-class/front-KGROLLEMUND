@@ -33,16 +33,28 @@ export default function ProfilePage() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
+        console.log('--- PROFIL: DÉBUT de la récupération des données ---');
         const token = localStorage.getItem('token');
         if (!token) {
+          console.error('--- PROFIL: Pas de token trouvé. Redirection. ---');
           router.push('/login');
           return;
         }
+        console.log('--- PROFIL: Token trouvé. Vérification en cours... ---');
 
         // Vérifier l'authentification
         const authResponse = await verify();
+        console.log('--- PROFIL: Réponse BRUTE du service de vérification ---', authResponse);
+        
+        if (!authResponse || !authResponse.data || !authResponse.data.user) {
+            console.error('--- PROFIL: La réponse de l\'API est INVALIDE. Redirection. ---', authResponse);
+            localStorage.removeItem('token');
+            router.push('/login');
+            return;
+        }
+
         const userData = authResponse.data.user;
-        console.log('LOG: User data fetched', userData);
+        console.log('--- PROFIL: Données utilisateur extraites avec SUCCÈS ---', userData);
         setUser(userData);
 
         // Récupérer le profil développeur s'il existe
@@ -82,19 +94,28 @@ export default function ProfilePage() {
           // Si le profil n'existe pas encore, ce n'est pas une erreur critique
           console.log('Pas de profil existant, création d&apos;un nouveau profil');
         }
-
-        // Récupérer le statut de l'abonnement si l'utilisateur est abonné
-        if (userData.isSubscribed && userData.subscriptionId) {
-          try {
-            const subscriptionResponse = await subscriptionService.checkSubscriptionStatus(userData.subscriptionId);
-            console.log('LOG: Subscription status fetched', subscriptionResponse);
-            setSubscriptionStatus(subscriptionResponse);
-          } catch (subscriptionError) {
-            console.error('Erreur lors de la récupération du statut d&apos;abonnement:', subscriptionError);
-          }
+        console.log('LOG: User data', userData);
+        
+        // Déterminer le statut de l'abonnement à partir des données utilisateur existantes
+        if (userData.isSubscribed && userData.subscriptionEndDate) {
+          const endDate = new Date(userData.subscriptionEndDate);
+          const now = new Date();
+          
+          setSubscriptionStatus({
+            status: endDate > now ? 'active' : 'expired',
+            current_period_end: userData.subscriptionEndDate // Utiliser directement la date string
+          });
+        } else {
+            setSubscriptionStatus({ status: 'inactive' });
         }
+
       } catch (error) {
-        console.error('Erreur lors du chargement des données:', error);
+        console.error('--- PROFIL: ERREUR FATALE dans le bloc try/catch. Redirection. ---');
+        console.error('--- PROFIL: Objet de l\'erreur:', error);
+        if (error.response) {
+            console.error('--- PROFIL: Données de la réponse d\'erreur:', error.response.data);
+            console.error('--- PROFIL: Statut de la réponse d\'erreur:', error.response.status);
+        }
         localStorage.removeItem('token');
         router.push('/login');
       } finally {
@@ -344,7 +365,7 @@ export default function ProfilePage() {
                       <div className={styles.subscriptionDetails}>
                         <p>Statut: <span className={styles.status}>{subscriptionStatus.status}</span></p>
                         <p>Fin de période: <span className={styles.date}>
-                          {new Date(subscriptionStatus.currentPeriodEnd).toLocaleDateString('fr-FR')}
+                          {new Date(subscriptionStatus.current_period_end).toLocaleDateString('fr-FR')}
                         </span></p>
                           <button 
                             onClick={openUnsubscribeModal} 
@@ -382,7 +403,7 @@ export default function ProfilePage() {
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.formGroup}>
-            <label htmlFor="sector">Secteur d'activité</label>
+            <label htmlFor="sector">Secteur d&apos;activité</label>
             <select
               id="sector"
               name="sector"
@@ -404,7 +425,7 @@ export default function ProfilePage() {
             <label>Spécialités</label>
             {!profile.sector ? (
               <div className={styles.disabledCheckboxGroup}>
-                <p className={styles.disabledText}>Veuillez d'abord sélectionner un secteur d'activité</p>
+                <p className={styles.disabledText}>Veuillez d&apos;abord sélectionner un secteur d&apos;activité</p>
               </div>
             ) : (
               <div className={styles.checkboxGroup}>
@@ -464,7 +485,7 @@ export default function ProfilePage() {
           </div>
 
           <div className={styles.formGroup}>
-            <label htmlFor="yearsOfExperience">Années d'expérience</label>
+            <label htmlFor="yearsOfExperience">Années d&apos;expérience</label>
             <input
               type="number"
               id="yearsOfExperience"

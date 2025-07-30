@@ -248,7 +248,7 @@ export default function CompleteProfile() {
           Bienvenue {user.name}! Pour continuer, veuillez compléter votre profil professionnel.
         </p>
         
-        {error && <div className={styles.error}>{error}</div>}
+        {error && <div className={styles.error} role="alert">{error}</div>}
         {success && <div className={styles.success}>{success}</div>}
         
         <form onSubmit={handleSubmit}>

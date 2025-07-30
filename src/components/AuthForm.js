@@ -114,6 +114,8 @@ export default function AuthForm() {
            
           // Définir un cookie pour indiquer si le profil est complété
           document.cookie = `isProfileCompleted=${response.user.isProfileCompleted ? 'true' : 'false'}; path=/; max-age=86400`;
+          // Définir un cookie pour l'état de l'abonnement
+          document.cookie = `isSubscribed=${response.user.isSubscribed ? 'true' : 'false'}; path=/; max-age=86400`;
           // Définir un cookie pour le token également
           document.cookie = `token=${response.token}; path=/; max-age=86400`;
            

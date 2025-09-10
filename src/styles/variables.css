@@ -1,0 +1,88 @@
+:root {
+  /* Palette de couleurs principale */
+  --primary-color: #2563eb;        /* Bleu royal - Couleur principale */
+  --primary-light: #3b82f6;        /* Bleu royal clair */
+  --primary-dark: #1d4ed8;         /* Bleu royal foncé */
+  
+  /* Couleurs secondaires */
+  --secondary-color: #10b981;      /* Vert émeraude */
+  --secondary-light: #34d399;      /* Vert émeraude clair */
+  --secondary-dark: #059669;       /* Vert émeraude foncé */
+  
+  /* Couleurs d'accentuation */
+  --accent-color: #f59e0b;         /* Ambre */
+  --accent-light: #fbbf24;         /* Ambre clair */
+  --accent-dark: #d97706;          /* Ambre foncé */
+  
+  /* Couleurs des fournisseurs OAuth */
+  --google-color: #ea4335;         /* Rouge Google */
+  --facebook-color: #1877f2;       /* Bleu Facebook */
+  --github-color: #24292e;         /* Noir GitHub */
+  
+  /* Nuances de gris */
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  
+  /* Couleurs d'état */
+  --success-color: #10b981;        /* Vert - Succès */
+  --error-color: #ef4444;          /* Rouge - Erreur */
+  --warning-color: #f59e0b;        /* Ambre - Avertissement */
+  --info-color: #3b82f6;           /* Bleu - Information */
+  
+  /* Couleurs de texte */
+  --text-primary: var(--gray-900);
+  --text-secondary: var(--gray-600);
+  --text-tertiary: var(--gray-500);
+  --text-light: var(--gray-50);
+  
+  /* Couleurs de fond */
+  --bg-primary: #ffffff;
+  --bg-secondary: var(--gray-50);
+  --bg-tertiary: var(--gray-100);
+  
+  /* Espacements */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 2.5rem;
+  --space-3xl: 3rem;
+  
+  /* Rayons de bordure */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-full: 9999px;
+  
+  /* Ombres */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  
+  /* Typographie */
+  --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+  --font-size-4xl: 2.25rem;
+  
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 350ms ease;
+} 

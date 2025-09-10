@@ -1,0 +1,342 @@
+/* Styles existants */
+
+.oauthButtons {
+  margin-top: var(--space-xl);
+  text-align: center;
+}
+
+.oauthButtons p {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-md);
+  position: relative;
+}
+
+.oauthButtons p::before,
+.oauthButtons p::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 30%;
+  height: 1px;
+  background-color: var(--gray-300);
+}
+
+.oauthButtons p::before {
+  left: 0;
+}
+
+.oauthButtons p::after {
+  right: 0;
+}
+
+.oauthContainer {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-md);
+  margin-top: var(--space-lg);
+}
+
+.oauthBtn {
+  padding: var(--space-md);
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  max-width: 120px;
+  box-shadow: var(--shadow-sm);
+}
+
+.icon {
+  margin-right: var(--space-xs);
+  font-size: var(--font-size-lg);
+}
+
+.googleBtn {
+  background-color: white;
+  color: var(--gray-800);
+  border: 1px solid var(--gray-300);
+}
+
+.googleBtn:hover {
+  background-color: var(--gray-100);
+  box-shadow: var(--shadow-md);
+}
+
+.linkedinBtn {
+  background-color: #0077B5;
+  color: white;
+}
+
+.linkedinBtn:hover {
+  background-color: #005e93;
+  box-shadow: var(--shadow-md);
+}
+
+.githubBtn {
+  background-color: var(--github-color);
+  color: white;
+}
+
+.githubBtn:hover {
+  background-color: #000000;
+  box-shadow: var(--shadow-md);
+}
+
+.authForm {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  max-width: 400px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.authForm h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 1.8rem;
+  color: #2c3e50;
+}
+
+.formGroup {
+  margin-bottom: 1rem;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.formGroup input {
+  width: 100%;
+  padding: 10px 15px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+}
+
+.formGroup input:focus {
+  border-color: #3498db;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.passwordInput {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.togglePassword {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #7f8c8d;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0;
+}
+
+.togglePassword:hover {
+  color: #2c3e50;
+}
+
+.forgotPassword {
+  text-align: right;
+  margin-bottom: 15px;
+}
+
+.forgotBtn {
+  background: none;
+  border: none;
+  color: #3498db;
+  cursor: pointer;
+  font-size: 0.9rem;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.forgotBtn:hover {
+  color: #2980b9;
+}
+
+.submitBtn {
+  width: 100%;
+  padding: 12px;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  margin-top: 10px;
+}
+
+.submitBtn:hover {
+  background-color: #2980b9;
+}
+
+.submitBtn:disabled {
+  background-color: #95a5a6;
+  cursor: not-allowed;
+}
+
+.error {
+  background-color: #ffecef;
+  color: #e74c3c;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  font-size: 0.9rem;
+}
+
+.success {
+  background-color: #e8f8f5;
+  color: #27ae60;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  font-size: 0.9rem;
+}
+
+.separator {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 20px 0;
+}
+
+.separator::before,
+.separator::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #ddd;
+}
+
+.separator span {
+  padding: 0 10px;
+  color: #7f8c8d;
+  font-size: 0.9rem;
+}
+
+.formToggle {
+  text-align: center;
+  margin-top: 15px;
+}
+
+.toggleBtn {
+  background: none;
+  border: none;
+  color: #3498db;
+  cursor: pointer;
+  font-size: 0.9rem;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.toggleBtn:hover {
+  color: #2980b9;
+}
+
+.switchMode {
+  margin-top: var(--space-xl);
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.switchBtn {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  font-weight: 500;
+  cursor: pointer;
+  margin-left: var(--space-xs);
+  transition: color var(--transition-fast);
+  font-size: var(--font-size-sm);
+}
+
+.switchBtn:hover {
+  color: var(--primary-dark);
+  text-decoration: underline;
+}
+
+.googleBtn .icon {
+  color: #df4a32;
+}
+
+.linkedinBtn .icon {
+  color: #0077b5;
+}
+
+.githubBtn .icon {
+  color: #333333;
+}
+
+/* Nouveaux styles pour les éléments de formulaire ajoutés */
+.selectInput {
+  width: 100%;
+  padding: 10px 15px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+  background-color: white;
+  appearance: auto;
+  cursor: pointer;
+}
+
+.selectInput:focus {
+  border-color: #3498db;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.checkboxGroup {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.checkboxItem {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.checkboxItem input[type="checkbox"] {
+  width: auto;
+  margin-right: 8px;
+  cursor: pointer;
+}
+
+.checkboxItem label {
+  margin-bottom: 0;
+  font-weight: normal;
+  cursor: pointer;
+}
+
+/* Styles existants */
+.switchMode {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+} 

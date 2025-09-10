@@ -1,0 +1,451 @@
+.subscriptionPage {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.crownIcon {
+  font-size: 2.5rem;
+  color: gold;
+  margin-bottom: 1rem;
+}
+
+.plansContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  justify-content: center;
+}
+
+.planCard {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  width: 100%;
+  max-width: 350px;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.planCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Style pour le plan recommandé */
+.popularPlan {
+  transform: scale(1.05);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  border: 2px solid #4f46e5;
+}
+
+.popularPlan:hover {
+  transform: translateY(-5px) scale(1.05);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.popularBadge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #4f46e5;
+  color: white;
+  font-size: 0.8rem;
+  font-weight: bold;
+  padding: 0.4rem 1.2rem;
+  border-radius: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.savingsBadge {
+  background-color: #fbcfe8;
+  color: #be185d;
+  font-size: 0.9rem;
+  font-weight: bold;
+  padding: 0.4rem 0.8rem;
+  border-radius: 0.3rem;
+  display: inline-block;
+  margin: 0.5rem 0;
+  text-align: center;
+  width: 100%;
+}
+
+.planHeader {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.planCard h2 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.planDescription {
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.planPrice {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.amount {
+  font-size: 2.5rem;
+  font-weight: bold;
+}
+
+.currency {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-left: 0.2rem;
+}
+
+.interval {
+  color: #6b7280;
+  font-size: 1rem;
+}
+
+.monthlyCost {
+  text-align: center;
+  font-size: 0.9rem;
+  color: #4b5563;
+  margin-bottom: 1rem;
+}
+
+.features {
+  list-style: none;
+  margin: 1.5rem 0;
+  padding: 0;
+}
+
+.features li {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.8rem;
+  font-size: 0.95rem;
+}
+
+.checkIcon {
+  color: #10b981;
+  margin-right: 0.8rem;
+  font-size: 1rem;
+}
+
+.features .highlight {
+  font-weight: bold;
+  color: #be185d;
+}
+
+.subscribeButton {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  background-color: #f3f4f6;
+  color: #1f2937;
+  border: 1px solid #d1d5db;
+  border-radius: 0.3rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.subscribeButton:hover {
+  background-color: #e5e7eb;
+}
+
+.primaryButton {
+  background-color: #4f46e5;
+  color: white;
+  border: none;
+}
+
+.primaryButton:hover {
+  background-color: #4338ca;
+}
+
+.loadingContainer {
+  text-align: center;
+  margin: 3rem auto;
+  font-size: 1.1rem;
+  color: #6b7280;
+}
+
+.errorContainer {
+  max-width: 600px;
+  margin: 3rem auto;
+  text-align: center;
+  padding: 2rem;
+  background-color: #fee2e2;
+  border-radius: 0.5rem;
+  border: 1px solid #fecaca;
+}
+
+.errorContainer h2 {
+  color: #b91c1c;
+  margin-bottom: 1rem;
+}
+
+.errorContainer p {
+  margin-bottom: 1.5rem;
+  color: #7f1d1d;
+}
+
+.errorContainer button {
+  padding: 0.7rem 1.5rem;
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 0.3rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.errorContainer button:hover {
+  background-color: #dc2626;
+}
+
+/* Styles for Stripe configuration error page */
+.warningIcon {
+  font-size: 3rem;
+  color: #f59e0b;
+  margin-bottom: 1rem;
+}
+
+.stripeInstructions {
+  text-align: left;
+  background-color: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+}
+
+.stripeInstructions h3 {
+  color: #7c2d12;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+}
+
+.stripeInstructions ol {
+  margin-left: 1.5rem;
+  color: #9a3412;
+}
+
+.stripeInstructions li {
+  margin-bottom: 0.5rem;
+}
+
+.stripeInstructions a {
+  color: #4f46e5;
+  text-decoration: underline;
+  font-weight: 500;
+}
+
+.noPlans {
+  text-align: center;
+  width: 100%;
+  padding: 2rem;
+  background-color: #f3f4f6;
+  border-radius: 0.5rem;
+  color: #6b7280;
+}
+
+/* Media queries pour la responsivité */
+@media (max-width: 768px) {
+  .plansContainer {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .planCard {
+    max-width: 100%;
+  }
+  
+  .popularPlan {
+    transform: none;
+    order: -1;
+  }
+  
+  .popularPlan:hover {
+    transform: translateY(-5px);
+  }
+}
+
+/* Styles pour le conteneur de page */
+.pageContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+  position: relative;
+}
+
+/* Style pour le bouton de retour */
+.backButton {
+  background-color: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 0.3rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  margin-bottom: 1.5rem;
+  transition: all 0.2s ease;
+}
+
+.backButton:hover {
+  background-color: #e5e7eb;
+}
+
+/* Styles pour les pages de succès et d'annulation */
+.successContainer,
+.cancelContainer {
+  background-color: white;
+  border-radius: 0.8rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  padding: 3rem 2rem;
+  max-width: 700px;
+  margin: 2rem auto;
+  text-align: center;
+}
+
+.successContainer {
+  border-top: 5px solid #10b981;
+}
+
+.cancelContainer {
+  border-top: 5px solid #ef4444;
+}
+
+.successIcon,
+.cancelIcon {
+  font-size: 4rem;
+  margin-bottom: 1.5rem;
+}
+
+.successIcon {
+  color: #10b981;
+}
+
+.cancelIcon {
+  color: #ef4444;
+}
+
+.successContainer h1,
+.cancelContainer h1 {
+  font-size: 1.8rem;
+  margin-bottom: 1.5rem;
+  color: #1f2937;
+}
+
+.successContainer p,
+.cancelContainer p {
+  font-size: 1.1rem;
+  color: #4b5563;
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}
+
+.redirectMessage {
+  font-style: italic;
+  color: #6b7280;
+  margin-top: 2rem;
+  font-size: 0.95rem;
+}
+
+.actionButtons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  justify-content: center;
+}
+
+.homeButton,
+.tryAgainButton {
+  padding: 0.8rem 1.5rem;
+  border-radius: 0.3rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.homeButton {
+  background-color: #4f46e5;
+  color: white;
+  border: none;
+}
+
+.homeButton:hover {
+  background-color: #4338ca;
+}
+
+.tryAgainButton {
+  background-color: white;
+  color: #4f46e5;
+  border: 1px solid #4f46e5;
+}
+
+.tryAgainButton:hover {
+  background-color: #f3f4f6;
+}
+
+/* Styles pour les informations de test Stripe */
+.stripeTesting {
+  background-color: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.stripeTesting h3 {
+  color: #0369a1;
+  margin-bottom: 0.75rem;
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+.stripeTesting p {
+  margin-bottom: 1rem;
+  color: #0c4a6e;
+  text-align: center;
+}
+
+.stripeTesting ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.stripeTesting li {
+  padding: 0.5rem;
+  border-bottom: 1px solid #e0f2fe;
+  color: #0c4a6e;
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+.stripeTesting li:last-child {
+  border-bottom: none;
+}
+
+.stripeTesting strong {
+  color: #0284c7;
+} 

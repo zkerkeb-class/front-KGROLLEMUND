@@ -1,0 +1,149 @@
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #333;
+  color: white;
+  padding: 0.5rem 2rem;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.userIcon {
+  font-size: 1.2rem;
+  color: #fff;
+}
+
+.userName {
+  font-weight: bold;
+}
+
+.userEmail {
+  color: #ccc;
+  font-size: 0.8rem;
+  margin-left: 0.5rem;
+}
+
+.badge {
+  background-color: #4caf50;
+  color: white;
+  font-size: 0.7rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 10px;
+  margin-left: 0.5rem;
+}
+
+.navLinks {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.navLinks a {
+  color: white;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+.navLinks a:hover {
+  background-color: #444;
+}
+
+.navIcon {
+  font-size: 1rem;
+}
+
+.actionButtons {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.logoutBtn {
+  background: none;
+  border: 1px solid #666;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background-color 0.3s;
+}
+
+.logoutBtn:hover {
+  background-color: #f44336;
+  border-color: #f44336;
+}
+
+.logoutIcon {
+  font-size: 1rem;
+}
+
+.subscribeBtn {
+  background-color: #ffd700;
+  border: none;
+  color: #333;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background-color 0.3s;
+}
+
+.subscribeBtn:hover {
+  background-color: #ffeb3b;
+}
+
+.subscribeIcon {
+  font-size: 1rem;
+  color: #333;
+}
+
+.subscribedBadge {
+  background-color: #4caf50;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.subscribedIcon {
+  font-size: 1rem;
+  color: white;
+}
+
+@media (max-width: 768px) {
+  .navbar {
+    flex-direction: column;
+    padding: 1rem;
+    gap: 1rem;
+  }
+  
+  .navLinks {
+    width: 100%;
+    justify-content: space-around;
+  }
+  
+  .actionButtons {
+    width: 100%;
+    justify-content: space-around;
+  }
+}
